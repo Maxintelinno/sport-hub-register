@@ -8,8 +8,8 @@ type User struct {
 	Fullname   string    `json:"fullname" gorm:"column:fullname"`
 	UserType   string    `json:"usertype" gorm:"column:usertype"`
 	Password   string    `json:"password" gorm:"column:password"`
-	CreateDate time.Time `json:"createDate" gorm:"column:createDate"`
-	ModifyDate time.Time `json:"modifyDate" gorm:"column:modifyDate"`
+	CreateDate time.Time `json:"createDate" gorm:"column:createdate"`
+	ModifyDate time.Time `json:"modifyDate" gorm:"column:modifydate"`
 }
 
 func (User) TableName() string {
