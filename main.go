@@ -29,9 +29,15 @@ func main() {
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20)))
 
 	// Initialize Layers
+	tokenRepo := repository.NewTokenRepository(db)
+
 	userRepo := repository.NewUserRepository(db)
-	userSvc := service.NewUserService(userRepo)
+	userSvc := service.NewUserService(db, userRepo, tokenRepo)
 	userHandler := handler.NewUserHandler(userSvc)
+
+	otpRepo := repository.NewOTPRepository(db)
+	otpSvc := service.NewOTPService(db, otpRepo, tokenRepo)
+	otpHandler := handler.NewOTPHandler(otpSvc)
 
 	// Routes
 	e.GET("/", func(c echo.Context) error {
@@ -44,6 +50,10 @@ func main() {
 
 	// Register API
 	e.POST("/register", userHandler.Register)
+
+	// OTP API
+	e.POST("/otp/request", otpHandler.RequestOTP)
+	e.POST("/otp/verify", otpHandler.VerifyOTP)
 
 	// Start Server
 	port := os.Getenv("PORT")

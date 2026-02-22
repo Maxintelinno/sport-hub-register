@@ -14,10 +14,22 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-func (r *UserRepository) CreateUser(user *model.User) error {
-	result := r.db.Create(user)
-	if result.Error != nil {
-		return result.Error
+func (r *UserRepository) getDB(tx *gorm.DB) *gorm.DB {
+	if tx != nil {
+		return tx
 	}
-	return nil
+	return r.db
+}
+
+func (r *UserRepository) CreateUser(tx *gorm.DB, user *model.User) error {
+	return r.getDB(tx).Create(user).Error
+}
+
+func (r *UserRepository) FindByPhone(tx *gorm.DB, phone string) (*model.User, error) {
+	var user model.User
+	err := r.getDB(tx).Where("phone = ?", phone).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
 }

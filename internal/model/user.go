@@ -1,24 +1,27 @@
 package model
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type User struct {
-	ID         int       `json:"id" gorm:"primaryKey;autoIncrement"`
-	Username   string    `json:"username" gorm:"column:username"`
-	Fullname   string    `json:"fullname" gorm:"column:fullname"`
-	UserType   string    `json:"usertype" gorm:"column:usertype"`
-	Password   string    `json:"password" gorm:"column:password"`
-	CreateDate time.Time `json:"createDate" gorm:"column:createdate"`
-	ModifyDate time.Time `json:"modifyDate" gorm:"column:modifydate"`
+	ID           uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Phone        string    `json:"phone" gorm:"column:phone;unique;not null"`
+	Username     string    `json:"username" gorm:"column:username;unique;not null"`
+	PasswordHash string    `json:"-" gorm:"column:password_hash;not null"`
+	CreatedAt    time.Time `json:"created_at" gorm:"column:created_at;default:now()"`
+	UpdatedAt    time.Time `json:"updated_at" gorm:"column:updated_at;default:now()"`
 }
 
 func (User) TableName() string {
-	return "tbl_user"
+	return "users"
 }
 
 type RegisterRequest struct {
+	Phone    string `json:"phone" validate:"required"`
 	Username string `json:"username" validate:"required"`
-	Fullname string `json:"fullname" validate:"required"`
-	UserType string `json:"usertype" validate:"required"`
 	Password string `json:"password" validate:"required"`
+	Token    string `json:"token" validate:"required"`
 }
