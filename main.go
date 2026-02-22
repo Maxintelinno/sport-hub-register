@@ -1,46 +1,39 @@
 package main
 
 import (
-	"database/sql"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
-	"time"
+
+	"sport-hub-register/internal/database"
+	"sport-hub-register/internal/handler"
+	"sport-hub-register/internal/repository"
+	"sport-hub-register/internal/service"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	_ "github.com/lib/pq"
 )
 
 func main() {
+	// Initialize Database
+	db, err := database.InitDB()
+	if err != nil {
+		log.Fatal("Failed to connect to database:", err)
+	}
+
+	// Initialize Echo
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20)))
 
-	// 🔥 Connect DB
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal("DATABASE_URL not set")
-	}
+	// Initialize Layers
+	userRepo := repository.NewUserRepository(db)
+	userSvc := service.NewUserService(userRepo)
+	userHandler := handler.NewUserHandler(userSvc)
 
-	db, err := sql.Open("postgres", dbURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	db.SetMaxOpenConns(25)                  // max connection พร้อมกัน
-	db.SetMaxIdleConns(10)                  // idle pool
-	db.SetConnMaxLifetime(30 * time.Minute) // recycle connection
-	db.SetConnMaxIdleTime(5 * time.Minute)
-
-	if err = db.Ping(); err != nil {
-		log.Fatal(err)
-	}
-
-	log.Println("✅ Connected to PostgreSQL")
-
+	// Routes
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "API Running")
 	})
@@ -49,13 +42,13 @@ func main() {
 		return c.String(http.StatusOK, "OK")
 	})
 
-	log.Printf("All ENV: %+v\n", os.Environ())
-	log.Println("PORT =", os.Getenv("PORT"))
+	// Register API
+	e.POST("/register", userHandler.Register)
 
+	// Start Server
 	port := os.Getenv("PORT")
-	fmt.Println("PORT FROM ENV:", port)
 	if port == "" {
-		port = "8080" // fallback เฉพาะตอน local
+		port = "8080"
 	}
 
 	e.Logger.Fatal(e.Start(":" + port))
