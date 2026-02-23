@@ -47,10 +47,15 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 
 		// 3. Create User record
 		now := time.Now()
+		role := req.Role
+		if role == "" {
+			role = "user"
+		}
 		user = &model.User{
 			Phone:        req.Phone,
 			Username:     req.Username,
 			PasswordHash: string(hashedPassword),
+			Role:         role,
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}

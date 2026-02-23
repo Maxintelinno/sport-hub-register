@@ -11,6 +11,7 @@ type User struct {
 	Phone        string    `json:"phone" gorm:"column:phone;unique;not null"`
 	Username     string    `json:"username" gorm:"column:username;unique;not null"`
 	PasswordHash string    `json:"-" gorm:"column:password_hash;not null"`
+	Role         string    `json:"role" gorm:"column:role;not null;default:'user'"`
 	CreatedAt    time.Time `json:"created_at" gorm:"column:created_at;default:now()"`
 	UpdatedAt    time.Time `json:"updated_at" gorm:"column:updated_at;default:now()"`
 }
@@ -24,4 +25,5 @@ type RegisterRequest struct {
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`
 	Token    string `json:"token" validate:"required"`
+	Role     string `json:"role"`
 }
