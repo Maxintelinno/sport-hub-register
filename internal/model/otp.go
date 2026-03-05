@@ -20,10 +20,10 @@ func (OTPRequestRecord) TableName() string {
 }
 
 type OTPRequest struct {
-	Phone string `json:"phone" validate:"required"`
+	Phone string `json:"phone" validate:"required,numeric,min=10,max=10"`
 }
 
 type OTPVerifyRequest struct {
-	Phone string `json:"phone" validate:"required"`
-	Code  string `json:"code" validate:"required"`
+	Phone string `json:"phone" validate:"required,numeric,min=10,max=10"`
+	Code  string `json:"code" validate:"required,numeric,len=6"`
 }

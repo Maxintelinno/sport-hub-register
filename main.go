@@ -23,6 +23,11 @@ func main() {
 
 	// Initialize Echo
 	e := echo.New()
+
+	// Validator
+	//e.Validator = &customValidator.CustomValidator{Validator: validator.New()}
+
+	// Middleware
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())

@@ -28,7 +28,7 @@ func (s *OTPService) RequestOTP(phone string) (string, error) {
 	// 1. Cooldown Check (1 minute)
 	lastOTP, err := s.repo.FindLatestByPhone(nil, phone)
 	if err == nil && lastOTP != nil {
-		if time.Now().Sub(lastOTP.CreatedAt) < 1*time.Minute {
+		if time.Since(lastOTP.CreatedAt) < 1*time.Minute {
 			return "", errors.New("OTP requested too frequently. Please wait 1 minute.")
 		}
 	}

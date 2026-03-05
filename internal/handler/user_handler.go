@@ -19,13 +19,30 @@ func NewUserHandler(service *service.UserService) *UserHandler {
 func (h *UserHandler) Register(c echo.Context) error {
 	req := new(model.RegisterRequest)
 	if err := c.Bind(req); err != nil {
-		return c.JSON(http.StatusBadRequest, map[string]string{"message": "Invalid request"})
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid request format",
+		})
+	}
+
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
 	}
 
 	user, err := h.service.Register(req)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error()})
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
 	}
 
-	return c.JSON(http.StatusCreated, user)
+	return c.JSON(http.StatusCreated, StandardResponse{
+		Status:  "success",
+		Message: "User registered successfully",
+		Data:    user,
+	})
 }
