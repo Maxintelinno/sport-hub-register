@@ -7,9 +7,11 @@ import (
 
 	"sport-hub-register/internal/database"
 	"sport-hub-register/internal/handler"
+	"sport-hub-register/internal/pkg/validator"
 	"sport-hub-register/internal/repository"
 	"sport-hub-register/internal/service"
 
+	validatorV10 "github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -25,7 +27,7 @@ func main() {
 	e := echo.New()
 
 	// Validator
-	//e.Validator = &customValidator.CustomValidator{Validator: validator.New()}
+	e.Validator = &validator.CustomValidator{Validator: validatorV10.New()}
 
 	// Middleware
 	e.Use(middleware.Logger())
