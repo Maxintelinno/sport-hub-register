@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"log"
 	"net/http"
 	"strings"
 
@@ -9,6 +10,7 @@ import (
 
 func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
+		log.Printf("[AuthMiddleware] Checking path: %s", c.Path())
 		authHeader := c.Request().Header.Get("Authorization")
 		if authHeader == "" {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"message": "Authorization header is missing"})
