@@ -46,3 +46,34 @@ func (h *UserHandler) Register(c echo.Context) error {
 		Data:    user,
 	})
 }
+
+func (h *UserHandler) Login(c echo.Context) error {
+	req := new(model.LoginRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid request format",
+		})
+	}
+
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	user, err := h.service.Login(req)
+	if err != nil {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Login successful",
+		Data:    user,
+	})
+}

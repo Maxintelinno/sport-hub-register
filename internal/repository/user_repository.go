@@ -33,3 +33,12 @@ func (r *UserRepository) FindByPhone(tx *gorm.DB, phone string) (*model.User, er
 	}
 	return &user, nil
 }
+
+func (r *UserRepository) FindByUsername(tx *gorm.DB, username string) (*model.User, error) {
+	var user model.User
+	err := r.getDB(tx).Where("username = ?", username).First(&user).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}

@@ -50,7 +50,7 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 			Phone:        req.Phone,
 			Username:     req.Username,
 			PasswordHash: string(hashedPassword),
-			Role:         role,
+			Role:         role + "_" + req.Username + "_" + tokenRec.TokenHash,
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}
@@ -69,6 +69,22 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 
 	if err != nil {
 		return nil, err
+	}
+
+	return user, nil
+}
+
+func (s *UserService) Login(req *model.LoginRequest) (*model.User, error) {
+	// 1. Find User by Username
+	user, err := s.repo.FindByUsername(nil, req.Username)
+	if err != nil {
+		return nil, errors.New("invalid username or password")
+	}
+
+	// 2. Compare Password Hash
+	err = bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(req.Password))
+	if err != nil {
+		return nil, errors.New("invalid username or password")
 	}
 
 	return user, nil

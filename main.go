@@ -57,6 +57,7 @@ func main() {
 
 	// Register API
 	e.POST("/register", userHandler.Register)
+	e.POST("/login", userHandler.Login)
 
 	// OTP API
 	e.POST("/otp/request", otpHandler.RequestOTP)
