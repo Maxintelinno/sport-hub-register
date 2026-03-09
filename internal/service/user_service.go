@@ -49,6 +49,7 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 		user = &model.User{
 			Phone:        req.Phone,
 			Username:     req.Username,
+			Fullname:     req.Fullname,
 			PasswordHash: string(hashedPassword),
 			Role:         role + "_" + req.Username + "_" + tokenRec.TokenHash,
 			CreatedAt:    now,
