@@ -35,7 +35,7 @@ func (s *StorageService) GeneratePresignedURLs(req *model.UploadPresignRequest) 
 		})
 	}
 
-	log.Printf("[StorageService] ** Generated presigned URLs: %+v", resp)
+	log.Printf("[StorageService] **** Generated presigned URLs: %+v", resp)
 
 	return resp, nil
 }
