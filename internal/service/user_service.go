@@ -4,6 +4,7 @@ import (
 	"errors"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -87,6 +88,9 @@ func (s *UserService) Login(req *model.LoginRequest) (*model.User, error) {
 	if err != nil {
 		return nil, errors.New("invalid username or password")
 	}
+
+	parts := strings.Split(user.Role, "_")
+	user.Role = parts[0]
 
 	return user, nil
 }
