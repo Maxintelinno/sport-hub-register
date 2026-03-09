@@ -7,13 +7,14 @@ import (
 
 	"sport-hub-register/internal/database"
 	"sport-hub-register/internal/handler"
+	"sport-hub-register/internal/middleware"
 	"sport-hub-register/internal/pkg/validator"
 	"sport-hub-register/internal/repository"
 	"sport-hub-register/internal/service"
 
 	validatorV10 "github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -30,10 +31,10 @@ func main() {
 	e.Validator = &validator.CustomValidator{Validator: validatorV10.New()}
 
 	// Middleware
-	e.Use(middleware.Logger())
-	e.Use(middleware.Recover())
-	e.Use(middleware.CORS())
-	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(20)))
+	e.Use(echoMiddleware.Logger())
+	e.Use(echoMiddleware.Recover())
+	e.Use(echoMiddleware.CORS())
+	e.Use(echoMiddleware.RateLimiter(echoMiddleware.NewRateLimiterMemoryStore(20)))
 
 	// Initialize Layers
 	tokenRepo := repository.NewTokenRepository(db)
@@ -45,6 +46,9 @@ func main() {
 	otpRepo := repository.NewOTPRepository(db)
 	otpSvc := service.NewOTPService(db, otpRepo, tokenRepo)
 	otpHandler := handler.NewOTPHandler(otpSvc)
+
+	storageSvc := service.NewStorageService()
+	uploadHandler := handler.NewUploadHandler(storageSvc)
 
 	// Routes
 	e.GET("/", func(c echo.Context) error {
@@ -62,6 +66,11 @@ func main() {
 	// OTP API
 	e.POST("/otp/request", otpHandler.RequestOTP)
 	e.POST("/otp/verify", otpHandler.VerifyOTP)
+
+	// Upload API
+	api := e.Group("/api/v1")
+	api.Use(middleware.Auth)
+	api.POST("/uploads/presign", uploadHandler.Presign)
 
 	// Start Server
 	port := os.Getenv("PORT")
