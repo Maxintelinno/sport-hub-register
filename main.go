@@ -68,9 +68,8 @@ func main() {
 	e.POST("/otp/verify", otpHandler.VerifyOTP)
 
 	// Upload API
-	api := e.Group("/api/v1")
-	api.Use(middleware.Auth)
-	api.POST("/uploads/presign", uploadHandler.Presign)
+	e.Use(middleware.Auth)
+	e.POST("/uploads/presign", uploadHandler.Presign)
 
 	// Start Server
 	port := os.Getenv("PORT")
