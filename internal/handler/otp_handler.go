@@ -75,7 +75,7 @@ func (h *OTPHandler) VerifyOTP(c echo.Context) error {
 	}
 
 	log.Printf("[OTPHandler] VerifyOTP for phone: %s", req.Phone)
-	token, err := h.service.VerifyOTP(req.Phone, req.Code)
+	token, err := h.service.VerifyOTP(req.Phone, req.Otp)
 	if err != nil {
 		log.Printf("[OTPHandler] VerifyOTP Service Error for %s: %v", req.Phone, err)
 		return c.JSON(http.StatusUnauthorized, StandardResponse{
