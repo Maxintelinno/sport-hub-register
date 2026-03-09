@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/service"
@@ -25,6 +26,7 @@ type StandardResponse struct {
 func (h *OTPHandler) RequestOTP(c echo.Context) error {
 	req := new(model.OTPRequest)
 	if err := c.Bind(req); err != nil {
+		log.Printf("[OTPHandler] RequestOTP Bind Error: %v", err)
 		return c.JSON(http.StatusBadRequest, StandardResponse{
 			Status:  "error",
 			Message: "Invalid request format",
@@ -38,8 +40,10 @@ func (h *OTPHandler) RequestOTP(c echo.Context) error {
 		})
 	}
 
+	log.Printf("[OTPHandler] RequestOTP for phone: %s", req.Phone)
 	code, err := h.service.RequestOTP(req.Phone)
 	if err != nil {
+		log.Printf("[OTPHandler] RequestOTP Service Error for %s: %v", req.Phone, err)
 		return c.JSON(http.StatusInternalServerError, StandardResponse{
 			Status:  "error",
 			Message: err.Error(),
@@ -56,6 +60,7 @@ func (h *OTPHandler) RequestOTP(c echo.Context) error {
 func (h *OTPHandler) VerifyOTP(c echo.Context) error {
 	req := new(model.OTPVerifyRequest)
 	if err := c.Bind(req); err != nil {
+		log.Printf("[OTPHandler] VerifyOTP Bind Error: %v", err)
 		return c.JSON(http.StatusBadRequest, StandardResponse{
 			Status:  "error",
 			Message: "Invalid request format",
@@ -69,8 +74,10 @@ func (h *OTPHandler) VerifyOTP(c echo.Context) error {
 		})
 	}
 
+	log.Printf("[OTPHandler] VerifyOTP for phone: %s", req.Phone)
 	token, err := h.service.VerifyOTP(req.Phone, req.Code)
 	if err != nil {
+		log.Printf("[OTPHandler] VerifyOTP Service Error for %s: %v", req.Phone, err)
 		return c.JSON(http.StatusUnauthorized, StandardResponse{
 			Status:  "error",
 			Message: err.Error(),
