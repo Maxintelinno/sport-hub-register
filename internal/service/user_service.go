@@ -34,11 +34,6 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 			return errors.New("registration token expired")
 		}
 
-		err = bcrypt.CompareHashAndPassword([]byte(tokenRec.TokenHash), []byte(req.Token))
-		if err != nil {
-			return errors.New("invalid registration token")
-		}
-
 		// 2. Hash Password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 		if err != nil {
