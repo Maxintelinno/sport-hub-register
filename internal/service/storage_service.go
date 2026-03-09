@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"sport-hub-register/internal/model"
-
-	"github.com/google/uuid"
 )
 
 type StorageService struct {
@@ -28,7 +26,7 @@ func (s *StorageService) GeneratePresignedURLs(req *model.UploadPresignRequest) 
 
 	for _, f := range req.Files {
 		// Generate a unique object key
-		objectKey := fmt.Sprintf("fields/%s-%s", uuid.New().String(), f.FileName)
+		objectKey := fmt.Sprintf("fields/%s", f.FileName)
 
 		resp.Files = append(resp.Files, model.FileResponse{
 			ObjectKey: objectKey,
