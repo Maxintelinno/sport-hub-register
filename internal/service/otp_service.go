@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
 	"time"
@@ -38,6 +39,7 @@ func (s *OTPService) RequestOTP(phone string) (string, error) {
 
 	// 3. Generate 6-digit OTP
 	code := s.generateNumericOTP(6)
+	log.Println("OTP: ", code)
 
 	// 4. Hash OTP
 	hashedCode, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
