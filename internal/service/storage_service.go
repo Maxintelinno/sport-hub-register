@@ -2,6 +2,7 @@ package service
 
 import (
 	"fmt"
+	"log"
 	"sport-hub-register/internal/model"
 
 	"github.com/google/uuid"
@@ -35,6 +36,8 @@ func (s *StorageService) GeneratePresignedURLs(req *model.UploadPresignRequest) 
 			PublicURL: fmt.Sprintf("%s%s", s.BasePublicURL, objectKey),
 		})
 	}
+
+	log.Printf("[StorageService] ** Generated presigned URLs: %+v", resp)
 
 	return resp, nil
 }
