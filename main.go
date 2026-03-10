@@ -74,15 +74,16 @@ func main() {
 	// Upload API
 	e.POST("/uploads/presign", uploadHandler.Presign, middleware.Auth)
 
-	// Field API
+	// Public Field API
+	e.GET("/v1/fields", fieldHandler.GetFieldsBySection)
+
+	// Protected Field API
 	apiV1 := e.Group("/v1")
 	apiV1.Use(middleware.Auth)
 	apiV1.POST("/fields", fieldHandler.CreateField)
 	apiV1.PUT("/fields/:id", fieldHandler.UpdateField)
 	apiV1.GET("/owner/fields", fieldHandler.GetOwnerFields)
 	apiV1.PATCH("/owner/fields/status", fieldHandler.UpdateFieldStatus)
-
-	e.GET("/fields", fieldHandler.GetFieldsBySection)
 
 	// Start Server
 	port := os.Getenv("PORT")
