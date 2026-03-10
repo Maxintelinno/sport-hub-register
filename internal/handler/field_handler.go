@@ -88,3 +88,27 @@ func (h *FieldHandler) UpdateField(c echo.Context) error {
 		Data:    field,
 	})
 }
+
+func (h *FieldHandler) GetOwnerFields(c echo.Context) error {
+	ownerID := c.QueryParam("owner_id")
+	if ownerID == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "owner_id is required",
+		})
+	}
+
+	fields, err := h.service.GetFieldsByOwnerID(ownerID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Fields retrieved successfully",
+		Data:    fields,
+	})
+}

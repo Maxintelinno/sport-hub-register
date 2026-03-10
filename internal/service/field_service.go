@@ -132,6 +132,7 @@ func (s *FieldService) UpdateField(id string, req *model.UpdateFieldRequest) (*m
 					FieldID:   field.ID,
 					ObjectKey: imgReq.ObjectKey,
 					SortOrder: imgReq.SortOrder,
+					ImageUrl:  IMAGE_URL,
 				}
 			}
 			if err := s.repo.CreateFieldImages(tx, fieldImages); err != nil {
@@ -148,4 +149,8 @@ func (s *FieldService) UpdateField(id string, req *model.UpdateFieldRequest) (*m
 	}
 
 	return field, nil
+}
+
+func (s *FieldService) GetFieldsByOwnerID(ownerID string) ([]model.Field, error) {
+	return s.repo.FindFieldsByOwnerID(nil, ownerID)
 }
