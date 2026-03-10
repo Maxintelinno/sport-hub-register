@@ -152,5 +152,43 @@ func (s *FieldService) UpdateField(id string, req *model.UpdateFieldRequest) (*m
 }
 
 func (s *FieldService) GetFieldsByOwnerID(ownerID string) ([]model.Field, error) {
-	return s.repo.FindFieldsByOwnerID(nil, ownerID)
+	// 1. Fetch fields
+	fields, err := s.repo.FindFieldsByOwnerID(nil, ownerID)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(fields) == 0 {
+		return fields, nil
+	}
+
+	// 2. Collect field IDs
+	fieldIDs := make([]string, len(fields))
+	for i, f := range fields {
+		fieldIDs[i] = f.ID.String()
+	}
+
+	// 3. Fetch images for those field IDs
+	images, err := s.repo.FindImagesByFieldIDs(nil, fieldIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Map images to fields
+	imageMap := make(map[string][]model.FieldImage)
+	for _, img := range images {
+		fID := img.FieldID.String()
+		imageMap[fID] = append(imageMap[fID], img)
+	}
+
+	for i := range fields {
+		fID := fields[i].ID.String()
+		if imgs, ok := imageMap[fID]; ok {
+			fields[i].Images = imgs
+		} else {
+			fields[i].Images = []model.FieldImage{} // Ensure it's not nil for consistent JSON response
+		}
+	}
+
+	return fields, nil
 }

@@ -57,3 +57,15 @@ func (r *FieldRepository) FindFieldsByOwnerID(tx *gorm.DB, ownerID string) ([]mo
 	}
 	return fields, nil
 }
+
+func (r *FieldRepository) FindImagesByFieldIDs(tx *gorm.DB, fieldIDs []string) ([]model.FieldImage, error) {
+	var images []model.FieldImage
+	if len(fieldIDs) == 0 {
+		return images, nil
+	}
+	err := r.getDB(tx).Where("field_id IN ?", fieldIDs).Find(&images).Error
+	if err != nil {
+		return nil, err
+	}
+	return images, nil
+}
