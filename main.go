@@ -51,7 +51,7 @@ func main() {
 	uploadHandler := handler.NewUploadHandler(storageSvc)
 
 	fieldRepo := repository.NewFieldRepository(db)
-	fieldSvc := service.NewFieldService(db, fieldRepo, userRepo)
+	fieldSvc := service.NewFieldService(db, fieldRepo, userRepo, storageSvc)
 	fieldHandler := handler.NewFieldHandler(fieldSvc)
 
 	// Routes

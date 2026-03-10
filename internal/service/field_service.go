@@ -20,11 +20,12 @@ type FieldService struct {
 	storageService *StorageService
 }
 
-func NewFieldService(db *gorm.DB, repo *repository.FieldRepository, userRepo *repository.UserRepository) *FieldService {
+func NewFieldService(db *gorm.DB, repo *repository.FieldRepository, userRepo *repository.UserRepository, storageService *StorageService) *FieldService {
 	return &FieldService{
-		db:       db,
-		repo:     repo,
-		userRepo: userRepo,
+		db:             db,
+		repo:           repo,
+		userRepo:       userRepo,
+		storageService: storageService,
 	}
 }
 
@@ -208,12 +209,12 @@ func (s *FieldService) GetFieldsByOwnerID(ownerID string) ([]model.Field, error)
 
 			// ตั้ง thumbnail จากรูปแรก
 			if len(imgs) > 0 {
-				fields[i].ThumbnailURL = imgs[0].ImageUrl
+				fields[i].ThumbnailUrl = imgs[0].ImageUrl
 			}
 
 		} else {
 			fields[i].Images = []model.FieldImage{}
-			fields[i].ThumbnailURL = ""
+			fields[i].ThumbnailUrl = ""
 		}
 	}
 
