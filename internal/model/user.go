@@ -13,6 +13,8 @@ type User struct {
 	Fullname     string    `json:"fullname" gorm:"column:fullname;unique;not null"`
 	PasswordHash string    `json:"-" gorm:"column:password_hash;not null"`
 	Role         string    `json:"role" gorm:"column:role;not null;default:'user'"`
+	Province     string    `json:"province" gorm:"column:province;not null"`
+	District     string    `json:"district" gorm:"column:district;not null"`
 	CreatedAt    time.Time `json:"created_at" gorm:"column:created_at;default:now()"`
 	UpdatedAt    time.Time `json:"updated_at" gorm:"column:updated_at;default:now()"`
 }
@@ -27,6 +29,8 @@ type RegisterRequest struct {
 	Fullname string `json:"fullname" validate:"required"`
 	Password string `json:"password" validate:"required"`
 	Role     string `json:"role" validate:"required"`
+	Province string `json:"province" validate:"required"`
+	District string `json:"district" validate:"required"`
 }
 
 type LoginRequest struct {

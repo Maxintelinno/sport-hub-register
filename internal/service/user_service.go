@@ -53,6 +53,8 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 			Fullname:     req.Fullname,
 			PasswordHash: string(hashedPassword),
 			Role:         role + "_" + req.Username + "_" + tokenRec.TokenHash,
+			Province:     req.Province,
+			District:     req.District,
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}
