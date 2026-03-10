@@ -74,6 +74,10 @@ func main() {
 	// Upload API
 	e.POST("/uploads/presign", uploadHandler.Presign, middleware.Auth)
 
+	//GET /v1/fields?section=all&limit=10&offset=0
+	//GET /v1/fields?section=popular&limit=10&offset=0
+	//GET /v1/fields?section=nearby&lat=13.7563&lng=100.5018&limit=10
+	//GET /v1/fields?section=province&province=กรุงเทพมหานคร&limit=10
 	// Public Field API
 	e.GET("/v1/fields", fieldHandler.GetFieldsBySection)
 
