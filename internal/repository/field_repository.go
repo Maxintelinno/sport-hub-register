@@ -82,3 +82,18 @@ func (r *FieldRepository) FindAllFields(tx *gorm.DB) ([]model.Field, error) {
 	}
 	return fields, nil
 }
+
+func (r *FieldRepository) FindFieldsWithPagination(tx *gorm.DB, province string, limit, offset int) ([]model.Field, error) {
+	var fields []model.Field
+	db := r.getDB(tx).Model(&model.Field{})
+
+	if province != "" {
+		db = db.Where("province = ?", province)
+	}
+
+	err := db.Limit(limit).Offset(offset).Order("created_at DESC").Find(&fields).Error
+	if err != nil {
+		return nil, err
+	}
+	return fields, nil
+}

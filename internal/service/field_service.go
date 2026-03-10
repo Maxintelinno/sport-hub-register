@@ -240,9 +240,30 @@ func (s *FieldService) UpdateFieldStatus(req *model.UpdateFieldStatusRequest) er
 	return s.repo.UpdateFieldStatus(nil, req.FieldID.String(), req.Status)
 }
 
-func (s *FieldService) GetFieldsByProvince(province string) ([]model.Field, error) {
-	// 1. Fetch all fields
-	fields, err := s.repo.FindAllFields(nil)
+func (s *FieldService) GetFieldsBySection(section, province string, lat, lng float64, limit, offset int) ([]model.Field, error) {
+	var fields []model.Field
+	var err error
+
+	//GET /v1/fields?section=all&limit=10&offset=0
+	//GET /v1/fields?section=popular&limit=10&offset=0
+	//GET /v1/fields?section=nearby&lat=13.7563&lng=100.5018&limit=10
+	//GET /v1/fields?section=province&province=กรุงเทพมหานคร&limit=10
+
+	// 1. Fetch fields based on section
+	switch section {
+	case "province":
+		fields, err = s.repo.FindFieldsWithPagination(nil, province, limit, offset)
+	case "nearby":
+		// For nearby, typically we fetch a larger set then sort or use spatial query.
+		// For simplicity, we'll fetch all and sort by distance in memory for now.
+		fields, err = s.repo.FindAllFields(nil)
+	case "popular":
+		// Placeholder: sort by created_at or id for now
+		fields, err = s.repo.FindFieldsWithPagination(nil, "", limit, offset)
+	default: // "all" or any other
+		fields, err = s.repo.FindFieldsWithPagination(nil, "", limit, offset)
+	}
+
 	if err != nil {
 		return nil, err
 	}
@@ -251,19 +272,17 @@ func (s *FieldService) GetFieldsByProvince(province string) ([]model.Field, erro
 		return fields, nil
 	}
 
-	// 2. Collect field IDs
+	// 2. Fetch images and generate presigned URLs
 	fieldIDs := make([]string, len(fields))
 	for i, f := range fields {
 		fieldIDs[i] = f.ID.String()
 	}
 
-	// 3. Fetch images
 	images, err := s.repo.FindImagesByFieldIDs(nil, fieldIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	// 4. Map images and generate URLs
 	imageMap := make(map[string][]model.FieldImage)
 	for _, img := range images {
 		fID := img.FieldID.String()
@@ -274,7 +293,7 @@ func (s *FieldService) GetFieldsByProvince(province string) ([]model.Field, erro
 		imageMap[fID] = append(imageMap[fID], img)
 	}
 
-	// 5. Attach images and set thumbnail
+	// 3. Attach images and calculate distance for nearby
 	for i := range fields {
 		fID := fields[i].ID.String()
 		if imgs, ok := imageMap[fID]; ok {
@@ -290,16 +309,23 @@ func (s *FieldService) GetFieldsByProvince(province string) ([]model.Field, erro
 		}
 	}
 
-	// 6. Manual sorting: priority to requested province
-	if province != "" {
-		sort.SliceStable(fields, func(i, j int) bool {
-			// If i is in target province and j is not, i comes first
-			if fields[i].Province == province && fields[j].Province != province {
-				return true
-			}
-			// Otherwise maintain order
-			return false
+	// 4. Special sorting for nearby
+	if section == "nearby" && lat != 0 && lng != 0 {
+		sort.Slice(fields, func(i, j int) bool {
+			distI := (fields[i].Latitude-lat)*(fields[i].Latitude-lat) + (fields[i].Longitude-lng)*(fields[i].Longitude-lng)
+			distJ := (fields[j].Latitude-lat)*(fields[j].Latitude-lat) + (fields[j].Longitude-lng)*(fields[j].Longitude-lng)
+			return distI < distJ
 		})
+		// Apply pagination after sorting
+		start := offset
+		if start > len(fields) {
+			return []model.Field{}, nil
+		}
+		end := offset + limit
+		if end > len(fields) {
+			end = len(fields)
+		}
+		fields = fields[start:end]
 	}
 
 	return fields, nil

@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/service"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -146,10 +147,39 @@ func (h *FieldHandler) UpdateFieldStatus(c echo.Context) error {
 	})
 }
 
-func (h *FieldHandler) GetFieldsByProvince(c echo.Context) error {
+func (h *FieldHandler) GetFieldsBySection(c echo.Context) error {
+	section := c.QueryParam("section")
 	province := c.QueryParam("province")
 
-	fields, err := h.service.GetFieldsByProvince(province)
+	// Pagination defaults
+	limitStr := c.QueryParam("limit")
+	offsetStr := c.QueryParam("offset")
+	limit := 10
+	offset := 0
+
+	if limitStr != "" {
+		if l, err := strconv.Atoi(limitStr); err == nil {
+			limit = l
+		}
+	}
+	if offsetStr != "" {
+		if o, err := strconv.Atoi(offsetStr); err == nil {
+			offset = o
+		}
+	}
+
+	// Lat/Lng for nearby
+	latStr := c.QueryParam("lat")
+	lngStr := c.QueryParam("lng")
+	var lat, lng float64
+	if latStr != "" {
+		lat, _ = strconv.ParseFloat(latStr, 64)
+	}
+	if lngStr != "" {
+		lng, _ = strconv.ParseFloat(lngStr, 64)
+	}
+
+	fields, err := h.service.GetFieldsBySection(section, province, lat, lng, limit, offset)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, StandardResponse{
 			Status:  "error",
