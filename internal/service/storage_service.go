@@ -15,8 +15,8 @@ import (
 const (
 	Endpoint      = "https://t3.storageapi.dev"
 	Region        = "auto"
-	AccessKey     = "..."
-	SecretKey     = "..."
+	AccessKey     = "tid_bEaHLmficNIRTCLJlflthhYLVOFh_sSDasmmWufKrsfWeQSFBZ"
+	SecretKey     = "tsec_CwFWlzMyG+9FbHNE1YR64XjwOumjDF0V0dxQad64XyW_Le4XytCnFaFFkbEfD-qZC1ulxa"
 	BucketName    = "stocked-pocket-jm-kiclnxm"
 	BasePublicURL = "https://t3.storageapi.dev/stocked-pocket-jm-kiclnxm/"
 )
