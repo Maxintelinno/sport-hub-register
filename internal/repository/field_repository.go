@@ -69,3 +69,7 @@ func (r *FieldRepository) FindImagesByFieldIDs(tx *gorm.DB, fieldIDs []string) (
 	}
 	return images, nil
 }
+
+func (r *FieldRepository) UpdateFieldStatus(tx *gorm.DB, fieldID string, status string) error {
+	return r.getDB(tx).Model(&model.Field{}).Where("id = ?", fieldID).Update("status", status).Error
+}

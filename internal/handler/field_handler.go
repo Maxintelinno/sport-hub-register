@@ -112,3 +112,36 @@ func (h *FieldHandler) GetOwnerFields(c echo.Context) error {
 		Data:    fields,
 	})
 }
+
+func (h *FieldHandler) UpdateFieldStatus(c echo.Context) error {
+	req := new(model.UpdateFieldStatusRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid request body",
+		})
+	}
+
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	if err := h.service.UpdateFieldStatus(req); err != nil {
+		status := http.StatusInternalServerError
+		if err.Error() == "field not found" || err.Error() == "unauthorized: you do not own this field" {
+			status = http.StatusForbidden
+		}
+		return c.JSON(status, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Field status updated successfully",
+	})
+}

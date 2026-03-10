@@ -54,7 +54,7 @@ func (s *FieldService) CreateField(req *model.CreateFieldRequest) (*model.Field,
 			District:     req.District,
 			AddressLine:  req.AddressLine,
 			Description:  req.Description,
-			Status:       "pending_review",
+			Status:       "active",
 		}
 
 		// 3. Save Field
@@ -219,4 +219,23 @@ func (s *FieldService) GetFieldsByOwnerID(ownerID string) ([]model.Field, error)
 	}
 
 	return fields, nil
+}
+
+func (s *FieldService) UpdateFieldStatus(req *model.UpdateFieldStatusRequest) error {
+	// 1. Find existing field
+	field, err := s.repo.FindFieldByID(nil, req.FieldID.String())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.New("field not found")
+		}
+		return err
+	}
+
+	// 2. Validate owner
+	if field.OwnerID != req.OwnerID {
+		return errors.New("unauthorized: you do not own this field")
+	}
+
+	// 3. Update status
+	return s.repo.UpdateFieldStatus(nil, req.FieldID.String(), req.Status)
 }

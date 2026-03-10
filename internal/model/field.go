@@ -74,3 +74,9 @@ type FieldImageRequest struct {
 	ObjectKey string `json:"object_key" validate:"required"`
 	SortOrder int    `json:"sort_order"`
 }
+
+type UpdateFieldStatusRequest struct {
+	OwnerID uuid.UUID `json:"owner_id" validate:"required"`
+	FieldID uuid.UUID `json:"field_id" validate:"required"`
+	Status  string    `json:"status" validate:"required,oneof=active inactive"`
+}
