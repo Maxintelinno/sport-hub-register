@@ -256,6 +256,14 @@ func (s *FieldService) GetFieldsBySection(section, province string, lat, lng flo
 	case "nearby":
 		// For nearby, typically we fetch a larger set then sort or use spatial query.
 		// For simplicity, we'll fetch all and sort by distance in memory for now.
+		if lat < -90 || lat > 90 {
+			return nil, errors.New("invalid latitude")
+		}
+
+		if lng < -180 || lng > 180 {
+			return nil, errors.New("invalid longitude")
+		}
+
 		fields, err = s.repo.FindAllFields(nil)
 	case "popular":
 		// Placeholder: sort by created_at or id for now
