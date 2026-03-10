@@ -18,7 +18,6 @@ type Field struct {
 	District     string       `json:"district" gorm:"size:100;not null"`
 	AddressLine  string       `json:"address_line" gorm:"type:text;not null"`
 	Description  string       `json:"description" gorm:"type:text"`
-	ThumbnailURL string       `json:"thumbnail_url" gorm:"type:text"`
 	Status       string       `json:"status" gorm:"size:20;not null;default:'pending_review'"`
 	CreatedAt    time.Time    `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt    time.Time    `json:"updated_at" gorm:"not null;default:now()"`
