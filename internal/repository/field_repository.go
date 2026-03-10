@@ -51,7 +51,7 @@ func (r *FieldRepository) FindFieldByID(tx *gorm.DB, id string) (*model.Field, e
 
 func (r *FieldRepository) FindFieldsByOwnerID(tx *gorm.DB, ownerID string) ([]model.Field, error) {
 	var fields []model.Field
-	err := r.getDB(tx).Preload("Images").Where("owner_id = ?", ownerID).Find(&fields).Error
+	err := r.getDB(tx).Where("owner_id = ?", ownerID).Find(&fields).Error
 	if err != nil {
 		return nil, err
 	}
