@@ -8,6 +8,10 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	IMAGE_URL = "https://t3.storageapi.dev/stocked-pocket-jm-kiclnxm/"
+)
+
 type FieldService struct {
 	db       *gorm.DB
 	repo     *repository.FieldRepository
@@ -63,6 +67,7 @@ func (s *FieldService) CreateField(req *model.CreateFieldRequest) (*model.Field,
 					FieldID:   field.ID,
 					ObjectKey: imgReq.ObjectKey,
 					SortOrder: imgReq.SortOrder,
+					ImageUrl:  IMAGE_URL,
 				}
 			}
 			if err := s.repo.CreateFieldImages(tx, fieldImages); err != nil {

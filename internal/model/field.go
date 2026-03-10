@@ -28,6 +28,7 @@ type FieldImage struct {
 	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	FieldID   uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
 	ObjectKey string    `json:"object_key" gorm:"type:text;not null"`
+	ImageUrl  string    `json:"image_url" `
 	SortOrder int       `json:"sort_order" gorm:"default:0"`
 	CreatedAt time.Time `json:"created_at" gorm:"not null;default:now()"`
 }
