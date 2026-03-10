@@ -20,6 +20,8 @@ type Field struct {
 	Description  string       `json:"description" gorm:"type:text"`
 	Status       string       `json:"status" gorm:"size:20;not null;default:'pending_review'"`
 	ThumbnailUrl string       `json:"thumbnail_url" gorm:"size:255;null"`
+	Latitude     float64      `json:"latitude" gorm:"type:numeric(10,7);null"`
+	Longitude    float64      `json:"longitude" gorm:"type:numeric(10,7);null"`
 	CreatedAt    time.Time    `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt    time.Time    `json:"updated_at" gorm:"not null;default:now()"`
 	Images       []FieldImage `json:"images" gorm:"foreignKey:FieldID"`

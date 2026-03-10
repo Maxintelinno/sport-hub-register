@@ -239,3 +239,68 @@ func (s *FieldService) UpdateFieldStatus(req *model.UpdateFieldStatusRequest) er
 	// 3. Update status
 	return s.repo.UpdateFieldStatus(nil, req.FieldID.String(), req.Status)
 }
+
+func (s *FieldService) GetFieldsByProvince(province string) ([]model.Field, error) {
+	// 1. Fetch all fields
+	fields, err := s.repo.FindAllFields(nil)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(fields) == 0 {
+		return fields, nil
+	}
+
+	// 2. Collect field IDs
+	fieldIDs := make([]string, len(fields))
+	for i, f := range fields {
+		fieldIDs[i] = f.ID.String()
+	}
+
+	// 3. Fetch images
+	images, err := s.repo.FindImagesByFieldIDs(nil, fieldIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Map images and generate URLs
+	imageMap := make(map[string][]model.FieldImage)
+	for _, img := range images {
+		fID := img.FieldID.String()
+		imageURL, err := s.storageService.GeneratePresignedGetURL(img.ObjectKey)
+		if err == nil {
+			img.ImageUrl = imageURL
+		}
+		imageMap[fID] = append(imageMap[fID], img)
+	}
+
+	// 5. Attach images and set thumbnail
+	for i := range fields {
+		fID := fields[i].ID.String()
+		if imgs, ok := imageMap[fID]; ok {
+			sort.Slice(imgs, func(a, b int) bool {
+				return imgs[a].SortOrder < imgs[b].SortOrder
+			})
+			fields[i].Images = imgs
+			if len(imgs) > 0 {
+				fields[i].ThumbnailUrl = imgs[0].ImageUrl
+			}
+		} else {
+			fields[i].Images = []model.FieldImage{}
+		}
+	}
+
+	// 6. Manual sorting: priority to requested province
+	if province != "" {
+		sort.SliceStable(fields, func(i, j int) bool {
+			// If i is in target province and j is not, i comes first
+			if fields[i].Province == province && fields[j].Province != province {
+				return true
+			}
+			// Otherwise maintain order
+			return false
+		})
+	}
+
+	return fields, nil
+}

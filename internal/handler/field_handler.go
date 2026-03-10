@@ -145,3 +145,21 @@ func (h *FieldHandler) UpdateFieldStatus(c echo.Context) error {
 		Message: "Field status updated successfully",
 	})
 }
+
+func (h *FieldHandler) GetFieldsByProvince(c echo.Context) error {
+	province := c.QueryParam("province")
+
+	fields, err := h.service.GetFieldsByProvince(province)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Fields retrieved successfully",
+		Data:    fields,
+	})
+}
