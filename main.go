@@ -50,6 +50,10 @@ func main() {
 	storageSvc := service.NewStorageService()
 	uploadHandler := handler.NewUploadHandler(storageSvc)
 
+	fieldRepo := repository.NewFieldRepository(db)
+	fieldSvc := service.NewFieldService(db, fieldRepo, userRepo)
+	fieldHandler := handler.NewFieldHandler(fieldSvc)
+
 	// Routes
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "API Running")
@@ -69,6 +73,12 @@ func main() {
 
 	// Upload API
 	e.POST("/uploads/presign", uploadHandler.Presign, middleware.Auth)
+
+	// Field API
+	apiV1 := e.Group("/v1")
+	apiV1.Use(middleware.Auth)
+	apiV1.POST("/fields", fieldHandler.CreateField)
+	apiV1.PUT("/fields/:id", fieldHandler.UpdateField)
 
 	// Start Server
 	port := os.Getenv("PORT")

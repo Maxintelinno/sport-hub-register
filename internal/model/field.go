@@ -1,0 +1,75 @@
+package model
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type Field struct {
+	ID           uuid.UUID    `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	OwnerID      uuid.UUID    `json:"owner_id" gorm:"type:uuid;not null"`
+	Name         string       `json:"name" gorm:"size:150;not null"`
+	SportType    string       `json:"sport_type" gorm:"size:50;not null"`
+	PricePerHour float64      `json:"price_per_hour" gorm:"type:numeric(10,2);not null"`
+	OpenTime     string       `json:"open_time" gorm:"type:time;not null"`
+	CloseTime    string       `json:"close_time" gorm:"type:time;not null"`
+	Province     string       `json:"province" gorm:"size:100;not null"`
+	District     string       `json:"district" gorm:"size:100;not null"`
+	AddressLine  string       `json:"address_line" gorm:"type:text;not null"`
+	Description  string       `json:"description" gorm:"type:text"`
+	ThumbnailURL string       `json:"thumbnail_url" gorm:"type:text"`
+	Status       string       `json:"status" gorm:"size:20;not null;default:'pending_review'"`
+	CreatedAt    time.Time    `json:"created_at" gorm:"not null;default:now()"`
+	UpdatedAt    time.Time    `json:"updated_at" gorm:"not null;default:now()"`
+	Images       []FieldImage `json:"images" gorm:"foreignKey:FieldID"`
+}
+
+type FieldImage struct {
+	ID        uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	FieldID   uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
+	ObjectKey string    `json:"object_key" gorm:"type:text;not null"`
+	SortOrder int       `json:"sort_order" gorm:"default:0"`
+	CreatedAt time.Time `json:"created_at" gorm:"not null;default:now()"`
+}
+
+func (Field) TableName() string {
+	return "fields"
+}
+
+func (FieldImage) TableName() string {
+	return "field_images"
+}
+
+type CreateFieldRequest struct {
+	OwnerID      uuid.UUID           `json:"owner_id" validate:"required"`
+	Name         string              `json:"name" validate:"required"`
+	SportType    string              `json:"sport_type" validate:"required"`
+	PricePerHour int                 `json:"price_per_hour" validate:"required"`
+	OpenTime     string              `json:"open_time" validate:"required"`
+	CloseTime    string              `json:"close_time" validate:"required"`
+	Province     string              `json:"province" validate:"required"`
+	District     string              `json:"district" validate:"required"`
+	AddressLine  string              `json:"address_line" validate:"required"`
+	Description  string              `json:"description"`
+	Images       []FieldImageRequest `json:"images"`
+}
+
+type UpdateFieldRequest struct {
+	OwnerID      uuid.UUID           `json:"owner_id" validate:"required"`
+	Name         string              `json:"name" validate:"required"`
+	SportType    string              `json:"sport_type" validate:"required"`
+	PricePerHour int                 `json:"price_per_hour" validate:"required"`
+	OpenTime     string              `json:"open_time" validate:"required"`
+	CloseTime    string              `json:"close_time" validate:"required"`
+	Province     string              `json:"province" validate:"required"`
+	District     string              `json:"district" validate:"required"`
+	AddressLine  string              `json:"address_line" validate:"required"`
+	Description  string              `json:"description"`
+	Images       []FieldImageRequest `json:"images"`
+}
+
+type FieldImageRequest struct {
+	ObjectKey string `json:"object_key" validate:"required"`
+	SortOrder int    `json:"sort_order"`
+}
