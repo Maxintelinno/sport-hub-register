@@ -89,3 +89,31 @@ func (s *StorageService) GeneratePresignedURLs(req *model.UploadPresignRequest) 
 
 	return resp, nil
 }
+
+func (s *StorageService) GeneratePresignedGetURL(objectKey string) (string, error) {
+	ctx := context.Background()
+
+	req, err := s.Presigner.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String(s.BucketName),
+		Key:    aws.String(objectKey),
+	}, s3.WithPresignExpires(10*time.Minute))
+	if err != nil {
+		return "", err
+	}
+
+	return req.URL, nil
+}
+
+func (s *StorageService) GeneratePresignedDeleteURL(objectKey string) (string, error) {
+	ctx := context.Background()
+
+	req, err := s.Presigner.PresignDeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: aws.String(s.BucketName),
+		Key:    aws.String(objectKey),
+	}, s3.WithPresignExpires(10*time.Minute))
+	if err != nil {
+		return "", err
+	}
+
+	return req.URL, nil
+}

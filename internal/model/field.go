@@ -19,6 +19,7 @@ type Field struct {
 	AddressLine  string       `json:"address_line" gorm:"type:text;not null"`
 	Description  string       `json:"description" gorm:"type:text"`
 	Status       string       `json:"status" gorm:"size:20;not null;default:'pending_review'"`
+	ThumbnailURL string       `json:"thumbnail_url"`
 	CreatedAt    time.Time    `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt    time.Time    `json:"updated_at" gorm:"not null;default:now()"`
 	Images       []FieldImage `json:"images" gorm:"foreignKey:FieldID"`

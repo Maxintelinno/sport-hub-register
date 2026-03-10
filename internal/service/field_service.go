@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"sort"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
 
@@ -13,9 +14,10 @@ const (
 )
 
 type FieldService struct {
-	db       *gorm.DB
-	repo     *repository.FieldRepository
-	userRepo *repository.UserRepository
+	db             *gorm.DB
+	repo           *repository.FieldRepository
+	userRepo       *repository.UserRepository
+	storageService *StorageService
 }
 
 func NewFieldService(db *gorm.DB, repo *repository.FieldRepository, userRepo *repository.UserRepository) *FieldService {
@@ -176,17 +178,42 @@ func (s *FieldService) GetFieldsByOwnerID(ownerID string) ([]model.Field, error)
 
 	// 4. Map images to fields
 	imageMap := make(map[string][]model.FieldImage)
+
 	for _, img := range images {
 		fID := img.FieldID.String()
+
+		// 🔥 Generate presigned GET URL จาก object_key
+		imageURL, err := s.storageService.GeneratePresignedGetURL(img.ObjectKey)
+		if err != nil {
+			return nil, err
+		}
+
+		img.ImageUrl = imageURL
+
 		imageMap[fID] = append(imageMap[fID], img)
 	}
 
+	// 5. Attach images + thumbnail
 	for i := range fields {
 		fID := fields[i].ID.String()
+
 		if imgs, ok := imageMap[fID]; ok {
+
+			// sort images ตาม sort_order
+			sort.Slice(imgs, func(a, b int) bool {
+				return imgs[a].SortOrder < imgs[b].SortOrder
+			})
+
 			fields[i].Images = imgs
+
+			// ตั้ง thumbnail จากรูปแรก
+			if len(imgs) > 0 {
+				fields[i].ThumbnailURL = imgs[0].ImageUrl
+			}
+
 		} else {
-			fields[i].Images = []model.FieldImage{} // Ensure it's not nil for consistent JSON response
+			fields[i].Images = []model.FieldImage{}
+			fields[i].ThumbnailURL = ""
 		}
 	}
 
