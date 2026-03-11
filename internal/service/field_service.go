@@ -338,3 +338,38 @@ func (s *FieldService) GetFieldsBySection(section, province string, lat, lng flo
 
 	return fields, nil
 }
+
+func (s *FieldService) GetFieldByID(id string) (*model.Field, error) {
+	// 1. Fetch field
+	field, err := s.repo.FindFieldByID(nil, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// 2. Fetch images
+	images, err := s.repo.FindImagesByFieldIDs(nil, []string{id})
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Generate presigned URLs and sort
+	sort.Slice(images, func(i, j int) bool {
+		return images[i].SortOrder < images[j].SortOrder
+	})
+
+	for i := range images {
+		url, err := s.storageService.GeneratePresignedGetURL(images[i].ObjectKey)
+		if err == nil {
+			images[i].ImageUrl = url
+		}
+	}
+
+	field.Images = images
+	if len(images) > 0 {
+		field.ThumbnailUrl = images[0].ImageUrl
+	} else {
+		field.Images = []model.FieldImage{}
+	}
+
+	return field, nil
+}

@@ -86,6 +86,7 @@ func main() {
 	apiV1.Use(middleware.Auth)
 	apiV1.POST("/fields", fieldHandler.CreateField)
 	apiV1.PUT("/fields/:id", fieldHandler.UpdateField)
+	apiV1.GET("/fields/:id", fieldHandler.GetFieldByID)
 	apiV1.GET("/owner/fields", fieldHandler.GetOwnerFields)
 	apiV1.PATCH("/owner/fields/status", fieldHandler.UpdateFieldStatus)
 

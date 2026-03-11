@@ -193,3 +193,31 @@ func (h *FieldHandler) GetFieldsBySection(c echo.Context) error {
 		Data:    fields,
 	})
 }
+
+func (h *FieldHandler) GetFieldByID(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "id is required",
+		})
+	}
+
+	field, err := h.service.GetFieldByID(id)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if err.Error() == "record not found" {
+			status = http.StatusNotFound
+		}
+		return c.JSON(status, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Field retrieved successfully",
+		Data:    field,
+	})
+}
