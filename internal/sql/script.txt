@@ -1,0 +1,92 @@
+สำคัญมาก ผมแนะนำให้มีตารางนี้ เพราะ 1 สนามอาจมีหลายคอร์ท/หลายสนามย่อย
+
+เช่น:
+สนามฟุตบอล A
+สนามฟุตบอล B
+คอร์ทแบด 1
+คอร์ทแบด 2
+
+CREATE TABLE field_courts (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    field_id UUID NOT NULL REFERENCES fields(id) ON DELETE CASCADE,
+    name VARCHAR(100) NOT NULL,
+    price_per_hour NUMERIC(10,2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'active',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+
+bookings เก็บหัวรายการจอง
+CREATE TABLE bookings (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_no VARCHAR(30) NOT NULL UNIQUE,
+    user_id UUID NOT NULL REFERENCES users(id),
+    field_id UUID NOT NULL REFERENCES fields(id),
+    booking_date DATE NOT NULL,
+    total_amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    payment_status VARCHAR(20) NOT NULL DEFAULT 'unpaid',
+    note TEXT,
+    created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+status แนะนำ
+- pending
+- confirmed
+- cancelled
+- completed
+- expired
+
+payment_status
+- unpaid
+- paid
+- refunded
+
+booking_items
+เก็บรายละเอียดช่วงเวลาที่จองจริง
+CREATE TABLE booking_items (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    booking_id UUID NOT NULL REFERENCES bookings(id) ON DELETE CASCADE,
+    field_id UUID NOT NULL REFERENCES fields(id),
+    court_id UUID NOT NULL REFERENCES field_courts(id),
+    booking_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    start_at TIMESTAMP NOT NULL,
+    end_at TIMESTAMP NOT NULL,
+    price_per_hour NUMERIC(10,2) NOT NULL,
+    total_amount NUMERIC(10,2) NOT NULL,
+    status VARCHAR(20) NOT NULL DEFAULT 'confirmed',
+    created_at TIMESTAMP NOT NULL DEFAULT NOW()
+);
+
+ทำไมต้องมีทั้ง start_time/end_time และ start_at/end_at เพราะใช้งานคนละแบบ
+- start_time, end_time เอาไว้แสดงผล/ค้นหาง่าย
+- start_at, end_at เอาไว้ตรวจ overlap แบบจริงจัง
+เช่น
+- booking_date = 2026-03-12
+- start_time = 18:00
+- end_time = 20:00
+
+จะกลายเป็น
+- start_at = 2026-03-12 18:00:00
+= end_at = 2026-03-12 20:00:00
+
+จุดสำคัญสุด: กันจองซ้ำ
+
+PostgreSQL ทำได้สวยมากด้วย exclusion constraint
+ก่อนอื่นเปิด extension:
+
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+แล้วสร้าง constraint:
+
+ALTER TABLE booking_items
+ADD CONSTRAINT no_overlapping_booking
+EXCLUDE USING gist (
+    court_id WITH =,
+    tsrange(start_at, end_at) WITH &&
+)
+WHERE (status IN ('confirmed', 'pending'));

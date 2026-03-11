@@ -54,6 +54,11 @@ func main() {
 	fieldSvc := service.NewFieldService(db, fieldRepo, userRepo, storageSvc)
 	fieldHandler := handler.NewFieldHandler(fieldSvc)
 
+	bookingRepo := repository.NewBookingRepository(db)
+	courtRepo := repository.NewCourtRepository(db)
+	bookingSvc := service.NewBookingService(db, bookingRepo, courtRepo, fieldRepo)
+	bookingHandler := handler.NewBookingHandler(bookingSvc)
+
 	// Routes
 	e.GET("/", func(c echo.Context) error {
 		return c.String(http.StatusOK, "API Running")
@@ -74,14 +79,11 @@ func main() {
 	// Upload API
 	e.POST("/uploads/presign", uploadHandler.Presign, middleware.Auth)
 
-	//GET /v1/fields?section=all&limit=10&offset=0
-	//GET /v1/fields?section=popular&limit=10&offset=0
-	//GET /v1/fields?section=nearby&lat=13.7563&lng=100.5018&limit=10
-	//GET /v1/fields?section=province&province=กรุงเทพมหานคร&limit=10
-	// Public Field API
+	// Public Field/Court API
 	e.GET("/v1/fields", fieldHandler.GetFieldsBySection)
+	e.GET("/v1/courts", bookingHandler.GetCourts)
 
-	// Protected Field API
+	// Protected API
 	apiV1 := e.Group("/v1")
 	apiV1.Use(middleware.Auth)
 	apiV1.POST("/fields", fieldHandler.CreateField)
@@ -89,6 +91,11 @@ func main() {
 	apiV1.GET("/fields/:id", fieldHandler.GetFieldByID)
 	apiV1.GET("/owner/fields", fieldHandler.GetOwnerFields)
 	apiV1.PATCH("/owner/fields/status", fieldHandler.UpdateFieldStatus)
+
+	// Booking Routes
+	apiV1.POST("/courts", bookingHandler.CreateCourt)
+	apiV1.POST("/bookings", bookingHandler.CreateBooking)
+	apiV1.GET("/bookings/my", bookingHandler.GetMyBookings)
 
 	// Start Server
 	port := os.Getenv("PORT")

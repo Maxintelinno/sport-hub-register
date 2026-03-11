@@ -1,0 +1,68 @@
+package model
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
+
+type FieldCourt struct {
+	ID           uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	FieldID      uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
+	Name         string    `json:"name" gorm:"size:100;not null"`
+	PricePerHour float64   `json:"price_per_hour" gorm:"type:numeric(10,2);not null"`
+	Status       string    `json:"status" gorm:"size:20;not null;default:'active'"` // active, inactive
+	CreatedAt    time.Time `json:"created_at" gorm:"not null;default:now()"`
+	UpdatedAt    time.Time `json:"updated_at" gorm:"not null;default:now()"`
+}
+
+type Booking struct {
+	ID            uuid.UUID     `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	BookingNo     string        `json:"booking_no" gorm:"size:30;not null;unique"`
+	UserID        uuid.UUID     `json:"user_id" gorm:"type:uuid;not null"`
+	FieldID       uuid.UUID     `json:"field_id" gorm:"type:uuid;not null"`
+	BookingDate   time.Time     `json:"booking_date" gorm:"type:date;not null"`
+	TotalAmount   float64       `json:"total_amount" gorm:"type:numeric(10,2);not null;default:0"`
+	Status        string        `json:"status" gorm:"size:20;not null;default:'pending'"`         // pending, confirmed, cancelled, completed, expired
+	PaymentStatus string        `json:"payment_status" gorm:"size:20;not null;default:'unpaid'"` // unpaid, paid, refunded
+	Note          string        `json:"note" gorm:"type:text"`
+	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
+	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
+	Items         []BookingItem `json:"items" gorm:"foreignKey:BookingID"`
+}
+
+type BookingItem struct {
+	ID           uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	BookingID    uuid.UUID `json:"booking_id" gorm:"type:uuid;not null"`
+	FieldID      uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
+	CourtID      uuid.UUID `json:"court_id" gorm:"type:uuid;not null"`
+	BookingDate  time.Time `json:"booking_date" gorm:"type:date;not null"`
+	StartTime    string    `json:"start_time" gorm:"type:time;not null"`
+	EndTime      string    `json:"end_time" gorm:"type:time;not null"`
+	StartAt      time.Time `json:"start_at" gorm:"not null"`
+	EndAt        time.Time `json:"end_at" gorm:"not null"`
+	PricePerHour float64   `json:"price_per_hour" gorm:"type:numeric(10,2);not null"`
+	TotalAmount  float64   `json:"total_amount" gorm:"type:numeric(10,2);not null"`
+	Status       string    `json:"status" gorm:"size:20;not null;default:'confirmed'"`
+	CreatedAt    time.Time `json:"created_at" gorm:"not null;default:now()"`
+}
+
+// Request Models
+type CreateBookingRequest struct {
+	FieldID     uuid.UUID            `json:"field_id" validate:"required"`
+	BookingDate string               `json:"booking_date" validate:"required"` // YYYY-MM-DD
+	Note        string               `json:"note"`
+	Items       []CreateBookingItem  `json:"items" validate:"required,min=1"`
+}
+
+type CreateBookingItem struct {
+	CourtID   uuid.UUID `json:"court_id" validate:"required"`
+	StartTime string    `json:"start_time" validate:"required"` // HH:mm
+	EndTime   string    `json:"end_time" validate:"required"`   // HH:mm
+}
+
+type CreateCourtRequest struct {
+	FieldID      uuid.UUID `json:"field_id" validate:"required"`
+	Name         string    `json:"name" validate:"required"`
+	PricePerHour float64   `json:"price_per_hour" validate:"required"`
+}
