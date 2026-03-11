@@ -29,8 +29,6 @@ type RegisterRequest struct {
 	Fullname string `json:"fullname" validate:"required"`
 	Password string `json:"password" validate:"required"`
 	Role     string `json:"role" validate:"required"`
-	Province string `json:"province" validate:"required"`
-	District string `json:"district" validate:"required"`
 }
 
 type LoginRequest struct {
