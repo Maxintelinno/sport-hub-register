@@ -49,6 +49,7 @@ type BookingItem struct {
 
 // Request Models
 type CreateBookingRequest struct {
+	UserID      uuid.UUID            `json:"user_id" validate:"required"`
 	FieldID     uuid.UUID            `json:"field_id" validate:"required"`
 	BookingDate string               `json:"booking_date" validate:"required"` // YYYY-MM-DD
 	Note        string               `json:"note"`

@@ -9,6 +9,7 @@ import (
 	"sport-hub-register/internal/handler"
 	"sport-hub-register/internal/middleware"
 	"sport-hub-register/internal/pkg/validator"
+	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
 	"sport-hub-register/internal/service"
 
@@ -23,6 +24,17 @@ func main() {
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
 	}
+
+	// Auto Migration
+	db.AutoMigrate(
+		&model.User{},
+		&model.Field{},
+		&model.FieldImage{},
+		&model.FieldCourt{},
+		&model.Booking{},
+		&model.BookingItem{},
+		&model.RegistrationToken{},
+	)
 
 	// Initialize Echo
 	e := echo.New()

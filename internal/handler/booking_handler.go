@@ -5,7 +5,6 @@ import (
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/service"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -73,9 +72,6 @@ func (h *BookingHandler) GetCourts(c echo.Context) error {
 }
 
 func (h *BookingHandler) CreateBooking(c echo.Context) error {
-	userIDStr := c.Get("user_id").(string) // Assumes Auth middleware sets this
-	userID, _ := uuid.Parse(userIDStr)
-
 	req := new(model.CreateBookingRequest)
 	if err := c.Bind(req); err != nil {
 		return c.JSON(http.StatusBadRequest, StandardResponse{
@@ -91,7 +87,7 @@ func (h *BookingHandler) CreateBooking(c echo.Context) error {
 		})
 	}
 
-	booking, err := h.service.CreateBooking(userID, req)
+	booking, err := h.service.CreateBooking(req.UserID, req)
 	if err != nil {
 		return c.JSON(http.StatusBadRequest, StandardResponse{
 			Status:  "error",
@@ -107,7 +103,13 @@ func (h *BookingHandler) CreateBooking(c echo.Context) error {
 }
 
 func (h *BookingHandler) GetMyBookings(c echo.Context) error {
-	userID := c.Get("user_id").(string)
+	userID := c.QueryParam("user_id")
+	if userID == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "user_id is required",
+		})
+	}
 
 	bookings, err := h.service.GetUserBookings(userID)
 	if err != nil {
