@@ -148,3 +148,59 @@ func (s *BookingService) GetUserBookings(userID string) ([]model.Booking, error)
 func (s *BookingService) generateBookingNo() string {
 	return fmt.Sprintf("BK%d%s", time.Now().Unix(), uuid.New().String()[:4])
 }
+
+func (s *BookingService) GetFieldAvailability(fieldID string, date string) (*model.CourtAvailabilityResponse, error) {
+	// 1. Fetch Field to get open/close times
+	field, err := s.fieldRepo.FindFieldByID(nil, fieldID)
+	if err != nil {
+		return nil, fmt.Errorf("field not found: %v", err)
+	}
+
+	// 2. Fetch all courts for the field
+	courts, err := s.courtRepo.FindCourtsByFieldID(nil, fieldID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Fetch all booked items for the date
+	bookedItems, err := s.bookingRepo.FindBookedItemsByFieldIDAndDate(nil, fieldID, date)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. Map booked items by courtID
+	bookedSlotsByCourt := make(map[uuid.UUID][]model.TimeSlot)
+	for _, item := range bookedItems {
+		slot := model.TimeSlot{
+			StartTime: item.StartTime,
+			EndTime:   item.EndTime,
+			Status:    "booked", // items returned are confirmed or pending
+		}
+		bookedSlotsByCourt[item.CourtID] = append(bookedSlotsByCourt[item.CourtID], slot)
+	}
+
+	// 5. Build response
+	fieldUUID, _ := uuid.Parse(fieldID)
+	response := &model.CourtAvailabilityResponse{
+		FieldID:   fieldUUID,
+		Date:      date,
+		OpenTime:  field.OpenTime,
+		CloseTime: field.CloseTime,
+		Courts:    make([]model.CourtAvailability, 0),
+	}
+
+	for _, court := range courts {
+		slots := bookedSlotsByCourt[court.ID]
+		if slots == nil {
+			slots = []model.TimeSlot{} // Return empty array instead of null
+		}
+		response.Courts = append(response.Courts, model.CourtAvailability{
+			CourtID:      court.ID,
+			CourtName:    court.Name,
+			PricePerHour: court.PricePerHour,
+			BookedSlots:  slots,
+		})
+	}
+
+	return response, nil
+}

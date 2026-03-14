@@ -53,3 +53,12 @@ func (r *BookingRepository) GetBookingByID(tx *gorm.DB, id string) (*model.Booki
 	}
 	return &booking, nil
 }
+
+func (r *BookingRepository) FindBookedItemsByFieldIDAndDate(tx *gorm.DB, fieldID string, date string) ([]model.BookingItem, error) {
+	var items []model.BookingItem
+	err := r.getDB(tx).
+		Where("field_id = ? AND booking_date = ? AND status IN (?, ?)", fieldID, date, "confirmed", "pending").
+		Order("start_at ASC").
+		Find(&items).Error
+	return items, err
+}

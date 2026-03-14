@@ -67,3 +67,25 @@ type CreateCourtRequest struct {
 	Name         string    `json:"name" validate:"required"`
 	PricePerHour float64   `json:"price_per_hour" validate:"required"`
 }
+
+// Response Models for Availability
+type TimeSlot struct {
+	StartTime string `json:"start_time"` // HH:mm
+	EndTime   string `json:"end_time"`   // HH:mm
+	Status    string `json:"status"`     // booked, available (computed by frontend or backend)
+}
+
+type CourtAvailability struct {
+	CourtID      uuid.UUID  `json:"court_id"`
+	CourtName    string     `json:"court_name"`
+	PricePerHour float64    `json:"price_per_hour"`
+	BookedSlots  []TimeSlot `json:"booked_slots"`
+}
+
+type CourtAvailabilityResponse struct {
+	FieldID   uuid.UUID           `json:"field_id"`
+	Date      string              `json:"date"`
+	OpenTime  string              `json:"open_time"`
+	CloseTime string              `json:"close_time"`
+	Courts    []CourtAvailability `json:"courts"`
+}

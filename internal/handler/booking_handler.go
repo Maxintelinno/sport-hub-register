@@ -125,3 +125,35 @@ func (h *BookingHandler) GetMyBookings(c echo.Context) error {
 		Data:    bookings,
 	})
 }
+
+func (h *BookingHandler) GetAvailability(c echo.Context) error {
+	fieldID := c.QueryParam("field_id")
+	if fieldID == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "field_id is required",
+		})
+	}
+
+	date := c.QueryParam("date")
+	if date == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "date is required (format: YYYY-MM-DD)",
+		})
+	}
+
+	availability, err := h.service.GetFieldAvailability(fieldID, date)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Availability retrieved successfully",
+		Data:    availability,
+	})
+}

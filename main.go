@@ -8,8 +8,8 @@ import (
 	"sport-hub-register/internal/database"
 	"sport-hub-register/internal/handler"
 	"sport-hub-register/internal/middleware"
-	"sport-hub-register/internal/pkg/validator"
 	"sport-hub-register/internal/model"
+	"sport-hub-register/internal/pkg/validator"
 	"sport-hub-register/internal/repository"
 	"sport-hub-register/internal/service"
 
@@ -108,6 +108,7 @@ func main() {
 	apiV1.POST("/courts", bookingHandler.CreateCourt)
 	apiV1.POST("/bookings", bookingHandler.CreateBooking)
 	apiV1.GET("/bookings/my", bookingHandler.GetMyBookings)
+	apiV1.GET("/availability", bookingHandler.GetAvailability)
 
 	// Start Server
 	port := os.Getenv("PORT")
