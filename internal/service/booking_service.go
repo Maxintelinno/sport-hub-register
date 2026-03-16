@@ -33,6 +33,8 @@ func (s *BookingService) CreateCourt(req *model.CreateCourtRequest) (*model.Fiel
 		FieldID:      req.FieldID,
 		Name:         req.Name,
 		PricePerHour: req.PricePerHour,
+		Capacity:     req.Capacity,
+		CourtType:    req.CourtType,
 		Status:       "active",
 	}
 

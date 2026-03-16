@@ -90,3 +90,12 @@ EXCLUDE USING gist (
     tsrange(start_at, end_at) WITH &&
 )
 WHERE (status IN ('confirmed', 'pending'));
+
+
+ALTER TABLE field_courts
+ADD COLUMN capacity INT,
+ADD COLUMN court_type VARCHAR(50);
+
+เพื่อเพิ่มสนามย่อย
+
+----------------

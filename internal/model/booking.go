@@ -11,6 +11,8 @@ type FieldCourt struct {
 	FieldID      uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
 	Name         string    `json:"name" gorm:"size:100;not null"`
 	PricePerHour float64   `json:"price_per_hour" gorm:"type:numeric(10,2);not null"`
+	Capacity     int       `json:"capacity" gorm:"type:int"`
+	CourtType    string    `json:"court_type" gorm:"size:50"`
 	Status       string    `json:"status" gorm:"size:20;not null;default:'active'"` // active, inactive
 	CreatedAt    time.Time `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt    time.Time `json:"updated_at" gorm:"not null;default:now()"`
@@ -66,6 +68,8 @@ type CreateCourtRequest struct {
 	FieldID      uuid.UUID `json:"field_id" validate:"required"`
 	Name         string    `json:"name" validate:"required"`
 	PricePerHour float64   `json:"price_per_hour" validate:"required"`
+	Capacity     int       `json:"capacity"`
+	CourtType    string    `json:"court_type"`
 }
 
 // Response Models for Availability
@@ -79,6 +83,8 @@ type CourtAvailability struct {
 	CourtID      uuid.UUID  `json:"court_id"`
 	CourtName    string     `json:"court_name"`
 	PricePerHour float64    `json:"price_per_hour"`
+	Capacity     int        `json:"capacity"`
+	CourtType    string     `json:"court_type"`
 	BookedSlots  []TimeSlot `json:"booked_slots"`
 }
 
