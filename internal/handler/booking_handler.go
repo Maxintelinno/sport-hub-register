@@ -17,22 +17,22 @@ func NewBookingHandler(service *service.BookingService) *BookingHandler {
 }
 
 func (h *BookingHandler) CreateCourt(c echo.Context) error {
-	req := new(model.CreateCourtRequest)
-	if err := c.Bind(req); err != nil {
+	var req model.CreateCourtsBulkRequest
+	if err := c.Bind(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, StandardResponse{
 			Status:  "error",
-			Message: "Invalid request format",
+			Message: "Invalid input",
 		})
 	}
 
-	if err := c.Validate(req); err != nil {
+	if err := c.Validate(&req); err != nil {
 		return c.JSON(http.StatusBadRequest, StandardResponse{
 			Status:  "error",
 			Message: err.Error(),
 		})
 	}
 
-	court, err := h.service.CreateCourt(req)
+	courts, err := h.service.CreateCourts(&req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, StandardResponse{
 			Status:  "error",
@@ -42,8 +42,8 @@ func (h *BookingHandler) CreateCourt(c echo.Context) error {
 
 	return c.JSON(http.StatusCreated, StandardResponse{
 		Status:  "success",
-		Message: "Court created successfully",
-		Data:    court,
+		Message: "Courts created successfully",
+		Data:    courts,
 	})
 }
 

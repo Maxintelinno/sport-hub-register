@@ -64,12 +64,16 @@ type CreateBookingItem struct {
 	EndTime   string    `json:"end_time" validate:"required"`   // HH:mm
 }
 
-type CreateCourtRequest struct {
-	FieldID      uuid.UUID `json:"field_id" validate:"required"`
-	Name         string    `json:"name" validate:"required"`
-	PricePerHour float64   `json:"price_per_hour" validate:"required"`
-	Capacity     int       `json:"capacity"`
-	CourtType    string    `json:"court_type"`
+type CreateCourtItem struct {
+	Name         string  `json:"name" validate:"required"`
+	PricePerHour float64 `json:"price_per_hour" validate:"required"`
+	Capacity     int     `json:"capacity"`
+	CourtType    string  `json:"court_type"`
+}
+
+type CreateCourtsBulkRequest struct {
+	FieldID uuid.UUID         `json:"field_id" validate:"required"`
+	Courts  []CreateCourtItem `json:"courts" validate:"required,dive"`
 }
 
 // Response Models for Availability

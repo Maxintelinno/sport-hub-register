@@ -25,6 +25,13 @@ func (r *CourtRepository) CreateCourt(tx *gorm.DB, court *model.FieldCourt) erro
 	return r.getDB(tx).Create(court).Error
 }
 
+func (r *CourtRepository) CreateCourts(tx *gorm.DB, courts []model.FieldCourt) error {
+	if len(courts) == 0 {
+		return nil
+	}
+	return r.getDB(tx).Create(&courts).Error
+}
+
 func (r *CourtRepository) FindCourtsByFieldID(tx *gorm.DB, fieldID string) ([]model.FieldCourt, error) {
 	var courts []model.FieldCourt
 	err := r.getDB(tx).Where("field_id = ?", fieldID).Find(&courts).Error

@@ -27,21 +27,33 @@ func NewBookingService(db *gorm.DB, bookingRepo *repository.BookingRepository, c
 	}
 }
 
-func (s *BookingService) CreateCourt(req *model.CreateCourtRequest) (*model.FieldCourt, error) {
-	court := &model.FieldCourt{
-		ID:           uuid.New(),
-		FieldID:      req.FieldID,
-		Name:         req.Name,
-		PricePerHour: req.PricePerHour,
-		Capacity:     req.Capacity,
-		CourtType:    req.CourtType,
-		Status:       "active",
+func (s *BookingService) CreateCourts(req *model.CreateCourtsBulkRequest) ([]model.FieldCourt, error) {
+	var courts []model.FieldCourt
+
+	// Map requested items to GORM models
+	for _, item := range req.Courts {
+		court := model.FieldCourt{
+			ID:           uuid.New(),
+			FieldID:      req.FieldID,
+			Name:         item.Name,
+			PricePerHour: item.PricePerHour,
+			Capacity:     item.Capacity,
+			CourtType:    item.CourtType,
+			Status:       "active",
+		}
+		courts = append(courts, court)
 	}
 
-	if err := s.courtRepo.CreateCourt(nil, court); err != nil {
+	// Use transaction for bulk insert
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		return s.courtRepo.CreateCourts(tx, courts)
+	})
+
+	if err != nil {
 		return nil, err
 	}
-	return court, nil
+
+	return courts, nil
 }
 
 func (s *BookingService) GetCourtsByFieldID(fieldID string) ([]model.FieldCourt, error) {
