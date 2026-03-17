@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"log"
 	"net/http"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/service"
@@ -95,6 +96,8 @@ func (h *BookingHandler) UpdateCourt(c echo.Context) error {
 			Message: "Invalid input",
 		})
 	}
+
+	log.Println("UpdateCourt", req)
 
 	if err := c.Validate(req); err != nil {
 		return c.JSON(http.StatusBadRequest, StandardResponse{

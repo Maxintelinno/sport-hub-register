@@ -107,7 +107,6 @@ func main() {
 	// Booking Routes
 	apiV1.POST("/courts", bookingHandler.CreateCourt)
 	apiV1.PUT("/courts/:id", bookingHandler.UpdateCourt)
-
 	apiV1.POST("/bookings", bookingHandler.CreateBooking)
 	apiV1.GET("/bookings/my", bookingHandler.GetMyBookings)
 	apiV1.GET("/availability", bookingHandler.GetAvailability)
