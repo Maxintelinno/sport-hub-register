@@ -46,3 +46,7 @@ func (r *CourtRepository) FindCourtByID(tx *gorm.DB, id string) (*model.FieldCou
 	}
 	return &court, nil
 }
+
+func (r *CourtRepository) UpdateCourt(tx *gorm.DB, court *model.FieldCourt) error {
+	return r.getDB(tx).Save(court).Error
+}

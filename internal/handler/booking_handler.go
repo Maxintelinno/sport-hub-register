@@ -71,6 +71,57 @@ func (h *BookingHandler) GetCourts(c echo.Context) error {
 	})
 }
 
+func (h *BookingHandler) UpdateCourt(c echo.Context) error {
+	id := c.Param("id")
+	if id == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "id is required",
+		})
+	}
+
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "unauthorized",
+		})
+	}
+
+	req := new(model.UpdateCourtRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid input",
+		})
+	}
+
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	court, err := h.service.UpdateCourt(id, userID, req)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if err.Error() == "court not found" {
+			status = http.StatusNotFound
+		}
+		return c.JSON(status, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Court updated successfully",
+		Data:    court,
+	})
+}
+
 func (h *BookingHandler) CreateBooking(c echo.Context) error {
 	req := new(model.CreateBookingRequest)
 	if err := c.Bind(req); err != nil {

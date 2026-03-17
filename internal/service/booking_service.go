@@ -60,6 +60,51 @@ func (s *BookingService) GetCourtsByFieldID(fieldID string) ([]model.FieldCourt,
 	return s.courtRepo.FindCourtsByFieldID(nil, fieldID)
 }
 
+func (s *BookingService) UpdateCourt(courtID string, userID string, req *model.UpdateCourtRequest) (*model.FieldCourt, error) {
+	// 1. Find existing court
+	court, err := s.courtRepo.FindCourtByID(nil, courtID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("court not found")
+		}
+		return nil, err
+	}
+
+	// 2. Validate req.FieldID == court.FieldID
+	if court.FieldID != req.FieldID {
+		return nil, errors.New("mismatched field_id in request")
+	}
+
+	// 3. Find field by req.FieldID to get OwnerID
+	field, err := s.fieldRepo.FindFieldByID(nil, req.FieldID.String())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("parent field not found")
+		}
+		return nil, err
+	}
+
+	// 4. Validate field.OwnerID == userID
+	if field.OwnerID.String() != userID {
+		return nil, errors.New("unauthorized: you do not own this field")
+	}
+
+	// 5. Update fields
+	court.Name = req.Name
+	court.PricePerHour = req.PricePerHour
+	court.Capacity = req.Capacity
+	court.CourtType = req.CourtType
+	court.Status = req.Status
+	court.UpdatedAt = time.Now()
+
+	// 6. Save
+	if err := s.courtRepo.UpdateCourt(nil, court); err != nil {
+		return nil, err
+	}
+
+	return court, nil
+}
+
 func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookingRequest) (*model.Booking, error) {
 	bookingDate, err := time.Parse("2006-01-02", req.BookingDate)
 	if err != nil {

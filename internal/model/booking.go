@@ -76,6 +76,15 @@ type CreateCourtsBulkRequest struct {
 	Courts  []CreateCourtItem `json:"courts" validate:"required,dive"`
 }
 
+type UpdateCourtRequest struct {
+	FieldID      uuid.UUID `json:"field_id" validate:"required"`
+	Name         string    `json:"name" validate:"required"`
+	PricePerHour float64   `json:"price_per_hour" validate:"required"`
+	Capacity     int       `json:"capacity"`
+	CourtType    string    `json:"court_type"`
+	Status       string    `json:"status" validate:"required,oneof=active inactive"`
+}
+
 // Response Models for Availability
 type TimeSlot struct {
 	StartTime string `json:"start_time"` // HH:mm

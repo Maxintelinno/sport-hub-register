@@ -26,6 +26,7 @@ func Auth(next echo.HandlerFunc) echo.HandlerFunc {
 
 		// (Optional) Here we would normally verify the JWT token
 		// For now, we'll just allow any non-empty token as a presence check.
+		c.Set("user_id", token)
 
 		return next(c)
 	}
