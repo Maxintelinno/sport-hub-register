@@ -202,7 +202,21 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 }
 
 func (s *BookingService) GetUserBookings(userID string) ([]model.Booking, error) {
-	return s.bookingRepo.FindBookingsByUserID(nil, userID)
+	bookings, err := s.bookingRepo.FindBookingsByUserID(nil, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Map CourtName from preloaded Court association
+	for i := range bookings {
+		for j := range bookings[i].Items {
+			if bookings[i].Items[j].Court.Name != "" {
+				bookings[i].Items[j].CourtName = bookings[i].Items[j].Court.Name
+			}
+		}
+	}
+
+	return bookings, nil
 }
 
 func (s *BookingService) generateBookingNo() string {

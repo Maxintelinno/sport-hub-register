@@ -32,10 +32,7 @@ func (r *BookingRepository) CreateBookingItems(tx *gorm.DB, items []model.Bookin
 func (r *BookingRepository) FindBookingsByUserID(tx *gorm.DB, userID string) ([]model.Booking, error) {
 	var bookings []model.Booking
 	err := r.getDB(tx).
-		Preload("Items", func(db *gorm.DB) *gorm.DB {
-			return db.Select("booking_items.*, field_courts.name as court_name").
-				Joins("LEFT JOIN field_courts ON field_courts.id = booking_items.court_id")
-		}).
+		Preload("Items.Court").
 		Where("user_id = ?", userID).
 		Order("created_at desc").
 		Find(&bookings).Error
@@ -55,10 +52,7 @@ func (r *BookingRepository) CheckOverlap(tx *gorm.DB, courtID string, startAt, e
 func (r *BookingRepository) GetBookingByID(tx *gorm.DB, id string) (*model.Booking, error) {
 	var booking model.Booking
 	err := r.getDB(tx).
-		Preload("Items", func(db *gorm.DB) *gorm.DB {
-			return db.Select("booking_items.*, field_courts.name as court_name").
-				Joins("LEFT JOIN field_courts ON field_courts.id = booking_items.court_id")
-		}).
+		Preload("Items.Court").
 		Where("id = ?", id).
 		First(&booking).Error
 	if err != nil {
