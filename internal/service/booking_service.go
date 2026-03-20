@@ -152,6 +152,7 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 			ID:           uuid.New(),
 			FieldID:      req.FieldID,
 			CourtID:      court.ID,
+			CourtName:    court.Name,
 			BookingDate:  bookingDate,
 			StartTime:    item.StartTime,
 			EndTime:      item.EndTime,

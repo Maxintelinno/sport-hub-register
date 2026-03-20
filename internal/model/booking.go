@@ -38,6 +38,7 @@ type BookingItem struct {
 	BookingID    uuid.UUID `json:"booking_id" gorm:"type:uuid;not null"`
 	FieldID      uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
 	CourtID      uuid.UUID `json:"court_id" gorm:"type:uuid;not null"`
+	CourtName    string    `json:"court_name" gorm:"-"`
 	BookingDate  time.Time `json:"booking_date" gorm:"type:date;not null"`
 	StartTime    string    `json:"start_time" gorm:"type:time;not null"`
 	EndTime      string    `json:"end_time" gorm:"type:time;not null"`
