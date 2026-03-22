@@ -44,17 +44,16 @@ func (s *FieldService) CreateField(req *model.CreateFieldRequest) (*model.Field,
 
 		// 2. Map request to model
 		field = &model.Field{
-			OwnerID:      req.OwnerID,
-			Name:         req.Name,
-			SportType:    req.SportType,
-			PricePerHour: float64(req.PricePerHour),
-			OpenTime:     req.OpenTime,
-			CloseTime:    req.CloseTime,
-			Province:     req.Province,
-			District:     req.District,
-			AddressLine:  req.AddressLine,
-			Description:  req.Description,
-			Status:       "active",
+			OwnerID:     req.OwnerID,
+			Name:        req.Name,
+			SportType:   req.SportType,
+			OpenTime:    req.OpenTime,
+			CloseTime:   req.CloseTime,
+			Province:    req.Province,
+			District:    req.District,
+			AddressLine: req.AddressLine,
+			Description: req.Description,
+			Status:      "active",
 		}
 
 		// 3. Save Field

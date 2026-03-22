@@ -45,17 +45,16 @@ func (FieldImage) TableName() string {
 }
 
 type CreateFieldRequest struct {
-	OwnerID      uuid.UUID           `json:"owner_id" validate:"required"`
-	Name         string              `json:"name" validate:"required"`
-	SportType    string              `json:"sport_type" validate:"required"`
-	PricePerHour int                 `json:"price_per_hour" validate:"required"`
-	OpenTime     string              `json:"open_time" validate:"required"`
-	CloseTime    string              `json:"close_time" validate:"required"`
-	Province     string              `json:"province" validate:"required"`
-	District     string              `json:"district" validate:"required"`
-	AddressLine  string              `json:"address_line" validate:"required"`
-	Description  string              `json:"description"`
-	Images       []FieldImageRequest `json:"images"`
+	OwnerID     uuid.UUID           `json:"owner_id" validate:"required"`
+	Name        string              `json:"name" validate:"required"`
+	SportType   string              `json:"sport_type" validate:"required"`
+	OpenTime    string              `json:"open_time" validate:"required"`
+	CloseTime   string              `json:"close_time" validate:"required"`
+	Province    string              `json:"province" validate:"required"`
+	District    string              `json:"district" validate:"required"`
+	AddressLine string              `json:"address_line" validate:"required"`
+	Description string              `json:"description"`
+	Images      []FieldImageRequest `json:"images"`
 }
 
 type UpdateFieldRequest struct {
