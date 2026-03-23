@@ -31,6 +31,17 @@ type RegisterRequest struct {
 	Role     string `json:"role" validate:"required"`
 }
 
+type UserSubscriptionResponse struct {
+	PlanName string `json:"plan_name"`
+	IsFree   bool   `json:"is_free"`
+	Status   string `json:"status"`
+}
+
+type UserResponse struct {
+	User         *User                     `json:"user"`
+	Subscription *UserSubscriptionResponse `json:"subscription,omitempty"`
+}
+
 type LoginRequest struct {
 	Username string `json:"username" validate:"required"`
 	Password string `json:"password" validate:"required"`

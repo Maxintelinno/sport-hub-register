@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -15,14 +16,23 @@ type UserService struct {
 	db        *gorm.DB
 	repo      *repository.UserRepository
 	tokenRepo *repository.TokenRepository
+	planRepo  *repository.PlanRepository
+	subRepo   *repository.SubscriptionRepository
 }
 
-func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *repository.TokenRepository) *UserService {
-	return &UserService{db: db, repo: repo, tokenRepo: tokenRepo}
+func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *repository.TokenRepository, planRepo *repository.PlanRepository, subRepo *repository.SubscriptionRepository) *UserService {
+	return &UserService{
+		db:        db,
+		repo:      repo,
+		tokenRepo: tokenRepo,
+		planRepo:  planRepo,
+		subRepo:   subRepo,
+	}
 }
 
-func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) {
+func (s *UserService) Register(req *model.RegisterRequest) (*model.UserResponse, error) {
 	var user *model.User
+	var sub *model.Subscription
 
 	err := s.db.Transaction(func(tx *gorm.DB) error {
 		// 1. Verify Registration Token
@@ -61,7 +71,44 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 			return err
 		}
 
-		// 4. Delete token after successful registration
+		// 4. Create Subscription for Owners
+		if strings.HasPrefix(user.Role, "owner") {
+			plan, err := s.planRepo.FindByName(tx, "Plans Free")
+			if err != nil {
+				if errors.Is(err, gorm.ErrRecordNotFound) {
+					// Seed plan if not exists
+					plan = &model.Plan{
+						ID:           uuid.New(),
+						Name:         "Plans Free",
+						Description:  "Free plan for initial registration",
+						Price:        0,
+						IsFree:       true,
+						DurationDays: 3650, // 10 years for free plan
+					}
+					if err := s.planRepo.CreatePlan(tx, plan); err != nil {
+						return err
+					}
+				} else {
+					return err
+				}
+			}
+
+			sub = &model.Subscription{
+				ID:      uuid.New(),
+				UserID:  user.ID,
+				PlanID:  plan.ID,
+				Status:  "active",
+				StartAt: now,
+				EndAt:   now.AddDate(0, 0, plan.DurationDays),
+			}
+
+			if err := s.subRepo.CreateSubscription(tx, sub); err != nil {
+				return err
+			}
+			sub.Plan = *plan
+		}
+
+		// 5. Delete token after successful registration
 		if err := s.tokenRepo.DeleteToken(tx, tokenRec.ID.String()); err != nil {
 			return err
 		}
@@ -73,10 +120,19 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.User, error) 
 		return nil, err
 	}
 
-	return user, nil
+	res := &model.UserResponse{User: user}
+	if sub != nil {
+		res.Subscription = &model.UserSubscriptionResponse{
+			PlanName: sub.Plan.Name,
+			IsFree:   sub.Plan.IsFree,
+			Status:   sub.Status,
+		}
+	}
+
+	return res, nil
 }
 
-func (s *UserService) Login(req *model.LoginRequest) (*model.User, error) {
+func (s *UserService) Login(req *model.LoginRequest) (*model.UserResponse, error) {
 	// 1. Find User by Username
 	user, err := s.repo.FindByUsername(nil, req.Username)
 	if err != nil {
@@ -92,5 +148,19 @@ func (s *UserService) Login(req *model.LoginRequest) (*model.User, error) {
 	parts := strings.Split(user.Role, "_")
 	user.Role = parts[0]
 
-	return user, nil
+	res := &model.UserResponse{User: user}
+
+	// 3. Fetch Subscription for Owners
+	if user.Role == "owner" {
+		sub, err := s.subRepo.FindLatestByUserID(nil, user.ID.String())
+		if err == nil {
+			res.Subscription = &model.UserSubscriptionResponse{
+				PlanName: sub.Plan.Name,
+				IsFree:   sub.Plan.IsFree,
+				Status:   sub.Status,
+			}
+		}
+	}
+
+	return res, nil
 }

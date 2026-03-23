@@ -32,7 +32,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 		})
 	}
 
-	user, err := h.service.Register(req)
+	res, err := h.service.Register(req)
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, StandardResponse{
 			Status:  "error",
@@ -43,7 +43,7 @@ func (h *UserHandler) Register(c echo.Context) error {
 	return c.JSON(http.StatusCreated, StandardResponse{
 		Status:  "success",
 		Message: "User registered successfully",
-		Data:    user,
+		Data:    res,
 	})
 }
 
@@ -63,7 +63,7 @@ func (h *UserHandler) Login(c echo.Context) error {
 		})
 	}
 
-	user, err := h.service.Login(req)
+	res, err := h.service.Login(req)
 	if err != nil {
 		return c.JSON(http.StatusUnauthorized, StandardResponse{
 			Status:  "error",
@@ -74,6 +74,6 @@ func (h *UserHandler) Login(c echo.Context) error {
 	return c.JSON(http.StatusOK, StandardResponse{
 		Status:  "success",
 		Message: "Login successful",
-		Data:    user,
+		Data:    res,
 	})
 }

@@ -34,6 +34,8 @@ func main() {
 		&model.Booking{},
 		&model.BookingItem{},
 		&model.RegistrationToken{},
+		&model.Plan{},
+		&model.Subscription{},
 	)
 
 	// Initialize Echo
@@ -51,8 +53,11 @@ func main() {
 	// Initialize Layers
 	tokenRepo := repository.NewTokenRepository(db)
 
+	planRepo := repository.NewPlanRepository(db)
+	subRepo := repository.NewSubscriptionRepository(db)
+
 	userRepo := repository.NewUserRepository(db)
-	userSvc := service.NewUserService(db, userRepo, tokenRepo)
+	userSvc := service.NewUserService(db, userRepo, tokenRepo, planRepo, subRepo)
 	userHandler := handler.NewUserHandler(userSvc)
 
 	otpRepo := repository.NewOTPRepository(db)
