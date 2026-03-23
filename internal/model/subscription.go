@@ -11,10 +11,14 @@ type Plan struct {
 	Name         string    `json:"name" gorm:"size:100;not null;unique"`
 	Description  string    `json:"description" gorm:"type:text"`
 	Price        float64   `json:"price" gorm:"type:numeric(10,2);not null;default:0"`
-	IsFree       bool      `json:"is_free" gorm:"not null;default:false"`
+	IsFree       bool      `json:"is_free" gorm:"column:is_free;not null;default:false"`
 	DurationDays int       `json:"duration_days" gorm:"type:int;not null"`
 	CreatedAt    time.Time `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt    time.Time `json:"updated_at" gorm:"not null;default:now()"`
+}
+
+func (Plan) TableName() string {
+	return "plans"
 }
 
 type Subscription struct {
@@ -36,4 +40,8 @@ type Subscription struct {
 
 	User User `json:"-" gorm:"foreignKey:UserID"`
 	Plan Plan `json:"plan" gorm:"foreignKey:PlanID"`
+}
+
+func (Subscription) TableName() string {
+	return "subscriptions"
 }
