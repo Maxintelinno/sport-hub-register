@@ -7,14 +7,22 @@ import (
 )
 
 type Plan struct {
-	ID           uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	Name         string    `json:"name" gorm:"size:100;not null;unique"`
-	Description  string    `json:"description" gorm:"type:text"`
-	Price        float64   `json:"price" gorm:"type:numeric(10,2);not null;default:0"`
-	IsFree       bool      `json:"is_free" gorm:"column:is_free;not null;default:false"`
-	DurationDays int       `json:"duration_days" gorm:"type:int;not null"`
-	CreatedAt    time.Time `json:"created_at" gorm:"not null;default:now()"`
-	UpdatedAt    time.Time `json:"updated_at" gorm:"not null;default:now()"`
+	ID                 uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
+	Code               string    `json:"code" gorm:"size:50;not null;unique"`
+	Name               string    `json:"name" gorm:"size:100;not null"`
+	Description        string    `json:"description" gorm:"type:text"`
+	Price              float64   `json:"price" gorm:"type:numeric(10,2);not null;default:0"`
+	BillingCycle       string    `json:"billing_cycle" gorm:"size:20;not null;default:'monthly'"`
+	TrialDays          int       `json:"trial_days" gorm:"type:int;not null;default:0"`
+	MaxFields          *int      `json:"max_fields"`
+	MaxCourts          *int      `json:"max_courts"`
+	HasReports         bool      `json:"has_reports" gorm:"not null;default:false"`
+	HasPromotion       bool      `json:"has_promotion" gorm:"not null;default:false"`
+	HasHomepageFeature bool      `json:"has_homepage_feature" gorm:"not null;default:false"`
+	HasPrioritySupport bool      `json:"has_priority_support" gorm:"not null;default:false"`
+	IsActive           bool      `json:"is_active" gorm:"not null;default:true"`
+	CreatedAt          time.Time `json:"created_at" gorm:"not null;default:now()"`
+	UpdatedAt          time.Time `json:"updated_at" gorm:"not null;default:now()"`
 }
 
 func (Plan) TableName() string {

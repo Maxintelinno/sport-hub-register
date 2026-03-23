@@ -79,11 +79,13 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.UserResponse,
 					// Seed plan if not exists
 					plan = &model.Plan{
 						ID:           uuid.New(),
+						Code:         "free",
 						Name:         "Plans Free",
 						Description:  "Free plan for initial registration",
 						Price:        0,
-						IsFree:       true,
-						DurationDays: 3650, // 10 years for free plan
+						BillingCycle: "lifetime",
+						TrialDays:    0,
+						IsActive:     true,
 					}
 					if err := s.planRepo.CreatePlan(tx, plan); err != nil {
 						return err
@@ -99,7 +101,7 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.UserResponse,
 				PlanID:  plan.ID,
 				Status:  "active",
 				StartAt: now,
-				EndAt:   now.AddDate(0, 0, plan.DurationDays),
+				EndAt:   now.AddDate(10, 0, 0), // 10 years for free plan
 			}
 
 			if err := s.subRepo.CreateSubscription(tx, sub); err != nil {
@@ -123,9 +125,9 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.UserResponse,
 	res := &model.UserResponse{User: user}
 	if sub != nil {
 		res.Subscription = &model.UserSubscriptionResponse{
-			PlanName: sub.Plan.Name,
-			IsFree:   sub.Plan.IsFree,
-			Status:   sub.Status,
+			PlanName:     sub.Plan.Name,
+			BillingCycle: sub.Plan.BillingCycle,
+			Status:       sub.Status,
 		}
 	}
 
@@ -155,9 +157,9 @@ func (s *UserService) Login(req *model.LoginRequest) (*model.UserResponse, error
 		sub, err := s.subRepo.FindLatestByUserID(nil, user.ID.String())
 		if err == nil {
 			res.Subscription = &model.UserSubscriptionResponse{
-				PlanName: sub.Plan.Name,
-				IsFree:   sub.Plan.IsFree,
-				Status:   sub.Status,
+				PlanName:     sub.Plan.Name,
+				BillingCycle: sub.Plan.BillingCycle,
+				Status:       sub.Status,
 			}
 		}
 	}

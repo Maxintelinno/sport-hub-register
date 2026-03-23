@@ -32,9 +32,9 @@ type RegisterRequest struct {
 }
 
 type UserSubscriptionResponse struct {
-	PlanName string `json:"plan_name"`
-	IsFree   bool   `json:"is_free"`
-	Status   string `json:"status"`
+	PlanName     string `json:"plan_name"`
+	BillingCycle string `json:"billing_cycle"`
+	Status       string `json:"status"`
 }
 
 type UserResponse struct {
