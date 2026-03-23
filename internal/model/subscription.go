@@ -30,21 +30,21 @@ func (Plan) TableName() string {
 }
 
 type Subscription struct {
-	ID            uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	UserID        uuid.UUID `json:"user_id" gorm:"type:uuid;not null"`
-	PlanID        uuid.UUID `json:"plan_id" gorm:"type:uuid;not null"`
-	Status        string    `json:"status" gorm:"size:30;not null"` // trial, active, expired, cancelled
-	StartAt       time.Time `json:"start_at" gorm:"not null"`
-	EndAt         time.Time `json:"end_at" gorm:"not null"`
-	TrialStartAt  *time.Time `json:"trial_start_at"`
-	TrialEndAt    *time.Time `json:"trial_end_at"`
-	ActivatedAt   *time.Time `json:"activated_at"`
-	ExpiredAt     *time.Time `json:"expired_at"`
-	CancelledAt   *time.Time `json:"cancelled_at"`
-	CancelReason  string    `json:"cancel_reason" gorm:"type:text"`
-	AutoRenew     bool      `json:"auto_renew" gorm:"not null;default:false"`
-	CreatedAt     time.Time `json:"created_at" gorm:"not null;default:now()"`
-	UpdatedAt     time.Time `json:"updated_at" gorm:"not null;default:now()"`
+	ID           uuid.UUID  `json:"id" gorm:"column:id;type:uuid;primaryKey;default:gen_random_uuid()"`
+	UserID       uuid.UUID  `json:"user_id" gorm:"column:user_id;type:uuid;not null"`
+	PlanID       uuid.UUID  `json:"plan_id" gorm:"column:plan_id;type:uuid;not null"`
+	Status       string     `json:"status" gorm:"column:status;size:30;not null"`
+	StartAt      time.Time  `json:"start_at" gorm:"column:start_at;not null"`
+	EndAt        time.Time  `json:"end_at" gorm:"column:end_at;not null"`
+	TrialStartAt *time.Time `json:"trial_start_at" gorm:"column:trial_start_at"`
+	TrialEndAt   *time.Time `json:"trial_end_at" gorm:"column:trial_end_at"`
+	ActivatedAt  *time.Time `json:"activated_at" gorm:"column:activated_at"`
+	ExpiredAt    *time.Time `json:"expired_at" gorm:"column:expired_at"`
+	CancelledAt  *time.Time `json:"cancelled_at" gorm:"column:cancelled_at"`
+	CancelReason *string    `json:"cancel_reason" gorm:"column:cancel_reason;type:text"`
+	AutoRenew    bool       `json:"auto_renew" gorm:"column:auto_renew;not null;default:false"`
+	CreatedAt    time.Time  `json:"created_at" gorm:"column:created_at;not null;default:now()"`
+	UpdatedAt    time.Time  `json:"updated_at" gorm:"column:updated_at;not null;default:now()"`
 
 	User User `json:"-" gorm:"foreignKey:UserID"`
 	Plan Plan `json:"plan" gorm:"foreignKey:PlanID"`
