@@ -40,13 +40,13 @@ func NewPlanRepository(db *gorm.DB) *PlanRepository {
 	return &PlanRepository{db: db}
 }
 
-func (r *PlanRepository) FindByName(tx *gorm.DB, name string) (*model.Plan, error) {
+func (r *PlanRepository) FindByCode(tx *gorm.DB, code string) (*model.Plan, error) {
 	db := r.db
 	if tx != nil {
 		db = tx
 	}
 	var plan model.Plan
-	err := db.Where("name = ?", name).First(&plan).Error
+	err := db.Where("code = ?", code).First(&plan).Error
 	return &plan, err
 }
 

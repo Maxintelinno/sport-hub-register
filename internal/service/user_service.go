@@ -73,7 +73,7 @@ func (s *UserService) Register(req *model.RegisterRequest) (*model.UserResponse,
 
 		// 4. Create Subscription for Owners
 		if strings.HasPrefix(user.Role, "owner") {
-			plan, err := s.planRepo.FindByName(tx, "Plans Free")
+			plan, err := s.planRepo.FindByCode(tx, "free")
 			if err != nil {
 				if errors.Is(err, gorm.ErrRecordNotFound) {
 					// Seed plan if not exists
