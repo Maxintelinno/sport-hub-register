@@ -44,16 +44,19 @@ func (s *FieldService) CreateField(req *model.CreateFieldRequest) (*model.Field,
 
 		// 2. Map request to model
 		field = &model.Field{
-			OwnerID:     req.OwnerID,
-			Name:        req.Name,
-			SportType:   req.SportType,
-			OpenTime:    req.OpenTime,
-			CloseTime:   req.CloseTime,
-			Province:    req.Province,
-			District:    req.District,
-			AddressLine: req.AddressLine,
-			Description: req.Description,
-			Status:      "active",
+			OwnerID:      req.OwnerID,
+			Name:         req.Name,
+			SportType:    req.SportType,
+			PricePerHour: req.PricePerHour,
+			OpenTime:     req.OpenTime,
+			CloseTime:    req.CloseTime,
+			Province:     req.Province,
+			District:     req.District,
+			AddressLine:  req.AddressLine,
+			Description:  req.Description,
+			Latitude:     req.Latitude,
+			Longitude:    req.Longitude,
+			Status:       "active",
 		}
 
 		// 3. Save Field
@@ -110,13 +113,15 @@ func (s *FieldService) UpdateField(id string, req *model.UpdateFieldRequest) (*m
 		// 3. Update field fields
 		field.Name = req.Name
 		field.SportType = req.SportType
-		field.PricePerHour = float64(req.PricePerHour)
+		field.PricePerHour = req.PricePerHour
 		field.OpenTime = req.OpenTime
 		field.CloseTime = req.CloseTime
 		field.Province = req.Province
 		field.District = req.District
 		field.AddressLine = req.AddressLine
 		field.Description = req.Description
+		field.Latitude = req.Latitude
+		field.Longitude = req.Longitude
 
 		if err := s.repo.UpdateField(tx, field); err != nil {
 			return err
