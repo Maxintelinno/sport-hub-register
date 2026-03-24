@@ -48,7 +48,6 @@ type CreateFieldRequest struct {
 	OwnerID      uuid.UUID           `json:"owner_id" validate:"required"`
 	Name         string              `json:"name" validate:"required"`
 	SportType    string              `json:"sport_type" validate:"required"`
-	PricePerHour float64             `json:"price_per_hour" validate:"required"`
 	OpenTime     string              `json:"open_time" validate:"required"`
 	CloseTime    string              `json:"close_time" validate:"required"`
 	Province     string              `json:"province" validate:"required"`
@@ -64,7 +63,6 @@ type UpdateFieldRequest struct {
 	OwnerID      uuid.UUID           `json:"owner_id" validate:"required"`
 	Name         string              `json:"name" validate:"required"`
 	SportType    string              `json:"sport_type" validate:"required"`
-	PricePerHour float64             `json:"price_per_hour" validate:"required"`
 	OpenTime     string              `json:"open_time" validate:"required"`
 	CloseTime    string              `json:"close_time" validate:"required"`
 	Province     string              `json:"province" validate:"required"`
