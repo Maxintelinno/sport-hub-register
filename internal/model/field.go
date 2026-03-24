@@ -10,8 +10,7 @@ type Field struct {
 	ID           uuid.UUID    `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	OwnerID      uuid.UUID    `json:"owner_id" gorm:"type:uuid;not null"`
 	Name         string       `json:"name" gorm:"size:150;not null"`
-	SportType    string       `json:"sport_type" gorm:"size:50;not null"`
-	PricePerHour float64      `json:"price_per_hour" gorm:"type:numeric(10,2);not null"`
+	SportType    string       `json:"sport_type" gorm:"size:50;not null"` 
 	OpenTime     string       `json:"open_time" gorm:"type:time;not null"`
 	CloseTime    string       `json:"close_time" gorm:"type:time;not null"`
 	Province     string       `json:"province" gorm:"size:100;not null"`
