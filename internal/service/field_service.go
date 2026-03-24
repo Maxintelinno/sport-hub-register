@@ -47,7 +47,6 @@ func (s *FieldService) CreateField(req *model.CreateFieldRequest) (*model.Field,
 			OwnerID:      req.OwnerID,
 			Name:         req.Name,
 			SportType:    req.SportType,
-			PricePerHour: req.PricePerHour,
 			OpenTime:     req.OpenTime,
 			CloseTime:    req.CloseTime,
 			Province:     req.Province,
@@ -113,7 +112,6 @@ func (s *FieldService) UpdateField(id string, req *model.UpdateFieldRequest) (*m
 		// 3. Update field fields
 		field.Name = req.Name
 		field.SportType = req.SportType
-		field.PricePerHour = req.PricePerHour
 		field.OpenTime = req.OpenTime
 		field.CloseTime = req.CloseTime
 		field.Province = req.Province
