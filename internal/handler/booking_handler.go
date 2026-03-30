@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/service"
+	"time"
 
 	"github.com/labstack/echo/v4"
 )
@@ -209,5 +210,46 @@ func (h *BookingHandler) GetAvailability(c echo.Context) error {
 		Status:  "success",
 		Message: "Availability retrieved successfully",
 		Data:    availability,
+	})
+}
+
+func (h *BookingHandler) GetOwnerBookings(c echo.Context) error {
+	ownerID, ok := c.Get("user_id").(string)
+	if !ok || ownerID == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "unauthorized",
+		})
+	}
+
+	fieldID := c.QueryParam("field_id")
+	if fieldID == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "field_id is required",
+		})
+	}
+
+	date := c.QueryParam("date")
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
+
+	bookings, err := h.service.GetOwnerBookings(ownerID, fieldID, date)
+	if err != nil {
+		status := http.StatusInternalServerError
+		if err.Error() == "unauthorized: you do not own this field" {
+			status = http.StatusForbidden
+		}
+		return c.JSON(status, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Owner bookings retrieved successfully",
+		Data:    bookings,
 	})
 }

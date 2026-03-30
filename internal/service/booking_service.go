@@ -175,6 +175,11 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 		Status:        "pending",
 		PaymentStatus: "unpaid",
 		Note:          req.Note,
+		Source:        req.Source,
+	}
+
+	if booking.Source == "" {
+		booking.Source = "online"
 	}
 
 	err = s.db.Transaction(func(tx *gorm.DB) error {
@@ -273,6 +278,55 @@ func (s *BookingService) GetFieldAvailability(fieldID string, date string) (*mod
 			CourtName:    court.Name,
 			PricePerHour: court.PricePerHour,
 			BookedSlots:  slots,
+		})
+	}
+
+	return response, nil
+}
+
+func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date string) (*model.OwnerBookingResponse, error) {
+	// 1. Verify owner owns the field
+	field, err := s.fieldRepo.FindFieldByID(nil, fieldID)
+	if err != nil {
+		return nil, fmt.Errorf("field not found: %v", err)
+	}
+
+	if field.OwnerID.String() != ownerID {
+		return nil, errors.New("unauthorized: you do not own this field")
+	}
+
+	// 2. Fetch owner bookings
+	items, err := s.bookingRepo.FindOwnerBookings(nil, fieldID, date)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Build response
+	fieldUUID, _ := uuid.Parse(fieldID)
+	response := &model.OwnerBookingResponse{
+		FieldID:   fieldUUID,
+		Date:      date,
+		OpenTime:  field.OpenTime,
+		CloseTime: field.CloseTime,
+		Bookings:  make([]model.OwnerBookingItemResponse, 0),
+	}
+
+	for _, item := range items {
+		customerName := "Walk-in Customer"
+		if item.Booking.User.Fullname != "" {
+			customerName = item.Booking.User.Fullname
+		} else if item.Booking.User.Username != "" {
+			customerName = item.Booking.User.Username
+		}
+
+		response.Bookings = append(response.Bookings, model.OwnerBookingItemResponse{
+			StartTime:     item.StartTime,
+			EndTime:       item.EndTime,
+			CourtName:     item.Court.Name,
+			CustomerName:  customerName,
+			Source:        item.Booking.Source,
+			PaymentStatus: item.Booking.PaymentStatus,
+			Status:        item.Booking.Status,
 		})
 	}
 

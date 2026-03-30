@@ -22,11 +22,13 @@ type Booking struct {
 	ID            uuid.UUID     `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
 	BookingNo     string        `json:"booking_no" gorm:"size:30;not null;unique"`
 	UserID        uuid.UUID     `json:"user_id" gorm:"type:uuid;not null"`
+	User          User          `json:"user" gorm:"foreignKey:UserID"`
 	FieldID       uuid.UUID     `json:"field_id" gorm:"type:uuid;not null"`
 	BookingDate   time.Time     `json:"booking_date" gorm:"type:date;not null"`
 	TotalAmount   float64       `json:"total_amount" gorm:"type:numeric(10,2);not null;default:0"`
 	Status        string        `json:"status" gorm:"size:20;not null;default:'pending'"`         // pending, confirmed, cancelled, completed, expired
 	PaymentStatus string        `json:"payment_status" gorm:"size:20;not null;default:'unpaid'"` // unpaid, paid, refunded
+	Source        string        `json:"booking_source" gorm:"size:20;not null;default:'online'"` // online, offline
 	Note          string        `json:"note" gorm:"type:text"`
 	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
@@ -35,8 +37,9 @@ type Booking struct {
 
 type BookingItem struct {
 	ID           uuid.UUID `json:"id" gorm:"type:uuid;primaryKey;default:gen_random_uuid()"`
-	BookingID    uuid.UUID `json:"booking_id" gorm:"type:uuid;not null"`
-	FieldID      uuid.UUID `json:"field_id" gorm:"type:uuid;not null"`
+	BookingID    uuid.UUID  `json:"booking_id" gorm:"type:uuid;not null"`
+	Booking      Booking    `json:"booking" gorm:"foreignKey:BookingID"`
+	FieldID      uuid.UUID  `json:"field_id" gorm:"type:uuid;not null"`
 	CourtID      uuid.UUID  `json:"court_id" gorm:"type:uuid;not null"`
 	Court        FieldCourt `json:"-" gorm:"foreignKey:CourtID"`
 	CourtName    string     `json:"court_name" gorm:"-"`
@@ -57,6 +60,7 @@ type CreateBookingRequest struct {
 	FieldID     uuid.UUID            `json:"field_id" validate:"required"`
 	BookingDate string               `json:"booking_date" validate:"required"` // YYYY-MM-DD
 	Note        string               `json:"note"`
+	Source      string               `json:"booking_source"` // online, offline
 	Items       []CreateBookingItem  `json:"items" validate:"required,min=1"`
 }
 
@@ -109,4 +113,22 @@ type CourtAvailabilityResponse struct {
 	OpenTime  string              `json:"open_time"`
 	CloseTime string              `json:"close_time"`
 	Courts    []CourtAvailability `json:"courts"`
+}
+
+type OwnerBookingItemResponse struct {
+	StartTime     string `json:"start_time"`
+	EndTime       string `json:"end_time"`
+	CourtName     string `json:"court_name"`
+	CustomerName  string `json:"customer_name"`
+	Source        string `json:"booking_source"`
+	PaymentStatus string `json:"payment_status"`
+	Status        string `json:"status"`
+}
+
+type OwnerBookingResponse struct {
+	FieldID   uuid.UUID                  `json:"field_id"`
+	Date      string                     `json:"date"`
+	OpenTime  string                     `json:"open_time"`
+	CloseTime string                     `json:"close_time"`
+	Bookings  []OwnerBookingItemResponse `json:"bookings"`
 }

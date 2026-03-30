@@ -69,3 +69,14 @@ func (r *BookingRepository) FindBookedItemsByFieldIDAndDate(tx *gorm.DB, fieldID
 		Find(&items).Error
 	return items, err
 }
+
+func (r *BookingRepository) FindOwnerBookings(tx *gorm.DB, fieldID string, date string) ([]model.BookingItem, error) {
+	var items []model.BookingItem
+	err := r.getDB(tx).
+		Preload("Booking.User").
+		Preload("Court").
+		Where("field_id = ? AND booking_date = ?", fieldID, date).
+		Order("start_at ASC").
+		Find(&items).Error
+	return items, err
+}
