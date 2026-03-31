@@ -28,7 +28,7 @@ type Booking struct {
 	TotalAmount   float64       `json:"total_amount" gorm:"type:numeric(10,2);not null;default:0"`
 	Status        string        `json:"status" gorm:"size:20;not null;default:'pending'"`         // pending, confirmed, cancelled, completed, expired
 	PaymentStatus string        `json:"payment_status" gorm:"size:20;not null;default:'unpaid'"` // unpaid, paid, refunded
-	Source        string        `json:"booking_source" gorm:"size:20;not null;default:'online'"` // online, offline
+	Source        string        `json:"booking_source" gorm:"column:booking_source;size:20;not null;default:'online'"` // online, offline
 	Note          string        `json:"note" gorm:"type:text"`
 	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
@@ -60,7 +60,7 @@ type CreateBookingRequest struct {
 	FieldID     uuid.UUID            `json:"field_id" validate:"required"`
 	BookingDate string               `json:"booking_date" validate:"required"` // YYYY-MM-DD
 	Note        string               `json:"note"`
-	Source      string               `json:"source"` // online, offline
+	Source      string               `json:"booking_source"` // online, offline
 	Items       []CreateBookingItem  `json:"items" validate:"required,min=1"`
 }
 
