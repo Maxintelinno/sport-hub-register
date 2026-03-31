@@ -262,6 +262,8 @@ func (s *BookingService) GetFieldAvailability(fieldID string, date string) (*mod
 	fieldUUID, _ := uuid.Parse(fieldID)
 	response := &model.CourtAvailabilityResponse{
 		FieldID:   fieldUUID,
+		FieldName: field.Name,
+		Address:   fmt.Sprintf("%s, %s, %s", field.AddressLine, field.District, field.Province),
 		Date:      date,
 		OpenTime:  field.OpenTime,
 		CloseTime: field.CloseTime,

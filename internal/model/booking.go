@@ -109,6 +109,8 @@ type CourtAvailability struct {
 
 type CourtAvailabilityResponse struct {
 	FieldID   uuid.UUID           `json:"field_id"`
+	FieldName string              `json:"field_name"`
+	Address   string              `json:"address"`
 	Date      string              `json:"date"`
 	OpenTime  string              `json:"open_time"`
 	CloseTime string              `json:"close_time"`
