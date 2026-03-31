@@ -325,9 +325,10 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 
 	for _, court := range courts {
 		courtTimeline := model.OwnerCourtTimelineResponse{
-			CourtID:   court.ID,
-			CourtName: court.Name,
-			Timeline:  make([]model.OwnerTimelineSlot, 0),
+			CourtID:        court.ID,
+			CourtName:      court.Name,
+			BookedSlots:    make([]model.OwnerTimelineSlot, 0),
+			AvailableSlots: make([]model.OwnerTimelineSlot, 0),
 		}
 
 		courtBookings := bookingsByCourt[court.ID]
@@ -336,7 +337,7 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 		for _, b := range courtBookings {
 			// Add available slot before booking if exists
 			if b.StartTime > currentTime {
-				courtTimeline.Timeline = append(courtTimeline.Timeline, model.OwnerTimelineSlot{
+				courtTimeline.AvailableSlots = append(courtTimeline.AvailableSlots, model.OwnerTimelineSlot{
 					StartTime: currentTime,
 					EndTime:   b.StartTime,
 					Type:      "available",
@@ -351,7 +352,7 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 				customerName = b.Booking.User.Username
 			}
 
-			courtTimeline.Timeline = append(courtTimeline.Timeline, model.OwnerTimelineSlot{
+			courtTimeline.BookedSlots = append(courtTimeline.BookedSlots, model.OwnerTimelineSlot{
 				StartTime:     b.StartTime,
 				EndTime:       b.EndTime,
 				Type:          "booked",
@@ -369,7 +370,7 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 
 		// Add final available slot if exists
 		if field.CloseTime > currentTime {
-			courtTimeline.Timeline = append(courtTimeline.Timeline, model.OwnerTimelineSlot{
+			courtTimeline.AvailableSlots = append(courtTimeline.AvailableSlots, model.OwnerTimelineSlot{
 				StartTime: currentTime,
 				EndTime:   field.CloseTime,
 				Type:      "available",

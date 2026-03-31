@@ -126,9 +126,10 @@ type OwnerTimelineSlot struct {
 }
 
 type OwnerCourtTimelineResponse struct {
-	CourtID   uuid.UUID           `json:"court_id"`
-	CourtName string              `json:"court_name"`
-	Timeline  []OwnerTimelineSlot `json:"timeline"`
+	CourtID        uuid.UUID           `json:"court_id"`
+	CourtName      string              `json:"court_name"`
+	BookedSlots    []OwnerTimelineSlot `json:"booked_slots"`
+	AvailableSlots []OwnerTimelineSlot `json:"available_slots"`
 }
 
 type OwnerBookingResponse struct {
