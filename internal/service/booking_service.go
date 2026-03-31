@@ -121,12 +121,13 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 			return nil, fmt.Errorf("court not found: %s", item.CourtID)
 		}
 
-		// Parse times
-		startAt, err := time.ParseInLocation("2006-01-02 15:04", req.BookingDate+" "+item.StartTime, time.Local)
+		// Parse times in ICT (GMT+7)
+		location := time.FixedZone("ICT", 7*3600)
+		startAt, err := time.ParseInLocation("2006-01-02 15:04", req.BookingDate+" "+item.StartTime, location)
 		if err != nil {
 			return nil, fmt.Errorf("invalid start_time format: %s", item.StartTime)
 		}
-		endAt, err := time.ParseInLocation("2006-01-02 15:04", req.BookingDate+" "+item.EndTime, time.Local)
+		endAt, err := time.ParseInLocation("2006-01-02 15:04", req.BookingDate+" "+item.EndTime, location)
 		if err != nil {
 			return nil, fmt.Errorf("invalid end_time format: %s", item.EndTime)
 		}
@@ -145,7 +146,8 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 		}
 
 		// Check if startAt is in the past
-		if startAt.Before(time.Now()) {
+		location := time.FixedZone("ICT", 7*3600)
+		if startAt.Before(time.Now().In(location)) {
 			return nil, fmt.Errorf("cannot book a time slot in the past for court %s", court.Name)
 		}
 
@@ -264,7 +266,9 @@ func (s *BookingService) GetFieldAvailability(fieldID string, date string) (*mod
 	}
 
 	// Add "past" slots as booked if the date is today
-	now := time.Now()
+	// Use ICT (GMT+7) for Thailand context
+	location := time.FixedZone("ICT", 7*3600)
+	now := time.Now().In(location)
 	todayStr := now.Format("2006-01-02")
 	if date == todayStr {
 		currentTimeStr := now.Format("15:04:05")
