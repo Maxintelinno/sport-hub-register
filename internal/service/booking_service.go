@@ -295,39 +295,88 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 		return nil, errors.New("unauthorized: you do not own this field")
 	}
 
-	// 2. Fetch owner bookings
+	// 2. Fetch all courts
+	courts, err := s.courtRepo.FindCourtsByFieldID(nil, fieldID)
+	if err != nil {
+		return nil, err
+	}
+
+	// 3. Fetch all bookings for the date (sorted by start_at in repo)
 	items, err := s.bookingRepo.FindOwnerBookings(nil, fieldID, date)
 	if err != nil {
 		return nil, err
 	}
 
-	// 3. Build response
+	// Group bookings by court
+	bookingsByCourt := make(map[uuid.UUID][]model.BookingItem)
+	for _, item := range items {
+		bookingsByCourt[item.CourtID] = append(bookingsByCourt[item.CourtID], item)
+	}
+
+	// 4. Build response
 	fieldUUID, _ := uuid.Parse(fieldID)
 	response := &model.OwnerBookingResponse{
 		FieldID:   fieldUUID,
 		Date:      date,
 		OpenTime:  field.OpenTime,
 		CloseTime: field.CloseTime,
-		Bookings:  make([]model.OwnerBookingItemResponse, 0),
+		Courts:    make([]model.OwnerCourtTimelineResponse, 0),
 	}
 
-	for _, item := range items {
-		customerName := "Walk-in Customer"
-		if item.Booking.User.Fullname != "" {
-			customerName = item.Booking.User.Fullname
-		} else if item.Booking.User.Username != "" {
-			customerName = item.Booking.User.Username
+	for _, court := range courts {
+		courtTimeline := model.OwnerCourtTimelineResponse{
+			CourtID:   court.ID,
+			CourtName: court.Name,
+			Timeline:  make([]model.OwnerTimelineSlot, 0),
 		}
 
-		response.Bookings = append(response.Bookings, model.OwnerBookingItemResponse{
-			StartTime:     item.StartTime,
-			EndTime:       item.EndTime,
-			CourtName:     item.Court.Name,
-			CustomerName:  customerName,
-			Source:        item.Booking.Source,
-			PaymentStatus: item.Booking.PaymentStatus,
-			Status:        item.Booking.Status,
-		})
+		courtBookings := bookingsByCourt[court.ID]
+		currentTime := field.OpenTime
+
+		for _, b := range courtBookings {
+			// Add available slot before booking if exists
+			if b.StartTime > currentTime {
+				courtTimeline.Timeline = append(courtTimeline.Timeline, model.OwnerTimelineSlot{
+					StartTime: currentTime,
+					EndTime:   b.StartTime,
+					Type:      "available",
+				})
+			}
+
+			// Add booked slot
+			customerName := "Walk-in Customer"
+			if b.Booking.User.Fullname != "" {
+				customerName = b.Booking.User.Fullname
+			} else if b.Booking.User.Username != "" {
+				customerName = b.Booking.User.Username
+			}
+
+			courtTimeline.Timeline = append(courtTimeline.Timeline, model.OwnerTimelineSlot{
+				StartTime:     b.StartTime,
+				EndTime:       b.EndTime,
+				Type:          "booked",
+				BookingSource: b.Booking.Source,
+				CustomerName:  customerName,
+				PaymentStatus: b.Booking.PaymentStatus,
+				Status:        b.Booking.Status,
+			})
+
+			// Update currentTime to end of this booking, but only if it's later than current
+			if b.EndTime > currentTime {
+				currentTime = b.EndTime
+			}
+		}
+
+		// Add final available slot if exists
+		if field.CloseTime > currentTime {
+			courtTimeline.Timeline = append(courtTimeline.Timeline, model.OwnerTimelineSlot{
+				StartTime: currentTime,
+				EndTime:   field.CloseTime,
+				Type:      "available",
+			})
+		}
+
+		response.Courts = append(response.Courts, courtTimeline)
 	}
 
 	return response, nil

@@ -115,20 +115,26 @@ type CourtAvailabilityResponse struct {
 	Courts    []CourtAvailability `json:"courts"`
 }
 
-type OwnerBookingItemResponse struct {
+type OwnerTimelineSlot struct {
 	StartTime     string `json:"start_time"`
 	EndTime       string `json:"end_time"`
-	CourtName     string `json:"court_name"`
-	CustomerName  string `json:"customer_name"`
-	Source        string `json:"booking_source"`
-	PaymentStatus string `json:"payment_status"`
-	Status        string `json:"status"`
+	Type          string `json:"type"` // booked, available
+	BookingSource string `json:"booking_source,omitempty"`
+	CustomerName  string `json:"customer_name,omitempty"`
+	PaymentStatus string `json:"payment_status,omitempty"`
+	Status        string `json:"status,omitempty"`
+}
+
+type OwnerCourtTimelineResponse struct {
+	CourtID   uuid.UUID           `json:"court_id"`
+	CourtName string              `json:"court_name"`
+	Timeline  []OwnerTimelineSlot `json:"timeline"`
 }
 
 type OwnerBookingResponse struct {
-	FieldID   uuid.UUID                  `json:"field_id"`
-	Date      string                     `json:"date"`
-	OpenTime  string                     `json:"open_time"`
-	CloseTime string                     `json:"close_time"`
-	Bookings  []OwnerBookingItemResponse `json:"bookings"`
+	FieldID   uuid.UUID                    `json:"field_id"`
+	Date      string                       `json:"date"`
+	OpenTime  string                       `json:"open_time"`
+	CloseTime string                       `json:"close_time"`
+	Courts    []OwnerCourtTimelineResponse `json:"courts"`
 }
