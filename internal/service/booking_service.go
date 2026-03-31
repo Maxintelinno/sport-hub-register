@@ -144,6 +144,11 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 			return nil, fmt.Errorf("court %s is already booked for the selected time", court.Name)
 		}
 
+		// Check if startAt is in the past
+		if startAt.Before(time.Now()) {
+			return nil, fmt.Errorf("cannot book a time slot in the past for court %s", court.Name)
+		}
+
 		duration := endAt.Sub(startAt).Hours()
 		itemAmount := duration * court.PricePerHour
 		totalAmount += itemAmount
@@ -256,6 +261,25 @@ func (s *BookingService) GetFieldAvailability(fieldID string, date string) (*mod
 			Status:    "booked", // items returned are confirmed or pending
 		}
 		bookedSlotsByCourt[item.CourtID] = append(bookedSlotsByCourt[item.CourtID], slot)
+	}
+
+	// Add "past" slots as booked if the date is today
+	now := time.Now()
+	todayStr := now.Format("2006-01-02")
+	if date == todayStr {
+		currentTimeStr := now.Format("15:04:05")
+		for _, court := range courts {
+			if currentTimeStr > field.OpenTime {
+				// Prevent booking from OpenTime to now
+				pastSlot := model.TimeSlot{
+					StartTime: field.OpenTime,
+					EndTime:   currentTimeStr,
+					Status:    "booked",
+				}
+				// Prepend to show it's the first "booked" block
+				bookedSlotsByCourt[court.ID] = append([]model.TimeSlot{pastSlot}, bookedSlotsByCourt[court.ID]...)
+			}
+		}
 	}
 
 	// 5. Build response
