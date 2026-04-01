@@ -116,6 +116,7 @@ func main() {
 	apiV1.GET("/bookings/my", bookingHandler.GetMyBookings)
 	apiV1.GET("/owner/bookings", bookingHandler.GetOwnerBookings)
 	apiV1.GET("/availability", bookingHandler.GetAvailability)
+	apiV1.POST("/owner/bookings/offline", bookingHandler.CreateOfflineBooking)
 
 	// Start Server
 	port := os.Getenv("PORT")

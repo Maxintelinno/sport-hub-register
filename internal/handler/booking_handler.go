@@ -7,6 +7,7 @@ import (
 	"sport-hub-register/internal/service"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -251,5 +252,45 @@ func (h *BookingHandler) GetOwnerBookings(c echo.Context) error {
 		Status:  "success",
 		Message: "Owner bookings retrieved successfully",
 		Data:    bookings,
+	})
+}
+
+func (h *BookingHandler) CreateOfflineBooking(c echo.Context) error {
+	ownerIDStr, ok := c.Get("user_id").(string)
+	if !ok || ownerIDStr == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "unauthorized",
+		})
+	}
+	ownerID, _ := uuid.Parse(ownerIDStr)
+
+	req := new(model.CreateOfflineBookingRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid request format",
+		})
+	}
+
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	booking, err := h.service.CreateOfflineBooking(ownerID, req)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusCreated, StandardResponse{
+		Status:  "success",
+		Message: "Offline booking created successfully",
+		Data:    booking,
 	})
 }

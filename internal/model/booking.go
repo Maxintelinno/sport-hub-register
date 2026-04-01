@@ -30,6 +30,9 @@ type Booking struct {
 	PaymentStatus string        `json:"payment_status" gorm:"size:20;not null;default:'unpaid'"` // unpaid, paid, refunded
 	Source        string        `json:"booking_source" gorm:"column:booking_source;size:20;not null;default:'online'"` // online, offline
 	Note          string        `json:"note" gorm:"type:text"`
+	CustomerName  string        `json:"customer_name" gorm:"size:150"`
+	CustomerPhone string        `json:"customer_phone" gorm:"size:20"`
+	PaymentSource string        `json:"payment_source" gorm:"size:50"`
 	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
 	Items         []BookingItem `json:"items" gorm:"foreignKey:BookingID"`
@@ -62,6 +65,16 @@ type CreateBookingRequest struct {
 	Note        string               `json:"note"`
 	Source      string               `json:"booking_source"` // online, offline
 	Items       []CreateBookingItem  `json:"items" validate:"required,min=1"`
+}
+
+type CreateOfflineBookingRequest struct {
+	FieldID            uuid.UUID           `json:"field_id" validate:"required"`
+	BookingDate        string               `json:"booking_date" validate:"required"` // YYYY-MM-DD
+	CustomerName       string               `json:"customer_name" validate:"required"`
+	CustomerTel        string               `json:"customer_tel"`
+	CustomerPaidSource string               `json:"customer_paid_source"`
+	CustomerRemark     string               `json:"customer_remark"`
+	Items              []CreateBookingItem  `json:"items" validate:"required,min=1"`
 }
 
 type CreateBookingItem struct {

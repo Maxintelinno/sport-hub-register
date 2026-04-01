@@ -146,7 +146,6 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 		}
 
 		// Check if startAt is in the past
-		location := time.FixedZone("ICT", 7*3600)
 		if startAt.Before(time.Now().In(location)) {
 			return nil, fmt.Errorf("cannot book a time slot in the past for court %s", court.Name)
 		}
@@ -376,7 +375,9 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 
 			// Add booked slot
 			customerName := "Walk-in Customer"
-			if b.Booking.User.Fullname != "" {
+			if b.Booking.Source == "offline" && b.Booking.CustomerName != "" {
+				customerName = b.Booking.CustomerName
+			} else if b.Booking.User.Fullname != "" {
 				customerName = b.Booking.User.Fullname
 			} else if b.Booking.User.Username != "" {
 				customerName = b.Booking.User.Username
@@ -411,4 +412,105 @@ func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date s
 	}
 
 	return response, nil
+}
+
+func (s *BookingService) CreateOfflineBooking(ownerID uuid.UUID, req *model.CreateOfflineBookingRequest) (*model.Booking, error) {
+	bookingDate, err := time.Parse("2006-01-02", req.BookingDate)
+	if err != nil {
+		return nil, errors.New("invalid booking_date format, use YYYY-MM-DD")
+	}
+
+	var totalAmount float64
+	bookingItems := make([]model.BookingItem, 0)
+
+	// 1. Validate and prepare items
+	for _, item := range req.Items {
+		court, err := s.courtRepo.FindCourtByID(nil, item.CourtID.String())
+		if err != nil {
+			return nil, fmt.Errorf("court not found: %s", item.CourtID)
+		}
+
+		// Parse times in ICT (GMT+7)
+		location := time.FixedZone("ICT", 7*3600)
+		startAt, err := time.ParseInLocation("2006-01-02 15:04", req.BookingDate+" "+item.StartTime, location)
+		if err != nil {
+			return nil, fmt.Errorf("invalid start_time format: %s", item.StartTime)
+		}
+		endAt, err := time.ParseInLocation("2006-01-02 15:04", req.BookingDate+" "+item.EndTime, location)
+		if err != nil {
+			return nil, fmt.Errorf("invalid end_time format: %s", item.EndTime)
+		}
+
+		if !endAt.After(startAt) {
+			return nil, fmt.Errorf("end_time must be after start_time for court %s", court.Name)
+		}
+
+		// Check overlap
+		overlap, err := s.bookingRepo.CheckOverlap(nil, court.ID.String(), startAt, endAt)
+		if err != nil {
+			return nil, err
+		}
+		if overlap {
+			return nil, fmt.Errorf("court %s is already booked for the selected time", court.Name)
+		}
+
+		duration := endAt.Sub(startAt).Hours()
+		itemAmount := duration * court.PricePerHour
+		totalAmount += itemAmount
+
+		bookingItems = append(bookingItems, model.BookingItem{
+			ID:           uuid.New(),
+			FieldID:      req.FieldID,
+			CourtID:      court.ID,
+			CourtName:    court.Name,
+			BookingDate:  bookingDate,
+			StartTime:    item.StartTime,
+			EndTime:      item.EndTime,
+			StartAt:      startAt,
+			EndAt:        endAt,
+			PricePerHour: court.PricePerHour,
+			TotalAmount:  itemAmount,
+			Status:       "confirmed",
+		})
+	}
+
+	// 2. Create Booking in Transaction
+	booking := &model.Booking{
+		ID:            uuid.New(),
+		BookingNo:     s.generateBookingNo(),
+		UserID:        ownerID, // Owner is the creator
+		FieldID:       req.FieldID,
+		BookingDate:   bookingDate,
+		TotalAmount:   totalAmount,
+		Status:        "confirmed",
+		PaymentStatus: "paid", // Default to paid for offline
+		Source:        "offline",
+		CustomerName:  req.CustomerName,
+		CustomerPhone: req.CustomerTel,
+		PaymentSource: req.CustomerPaidSource,
+		Note:          req.CustomerRemark,
+	}
+
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		if err := s.bookingRepo.CreateBooking(tx, booking); err != nil {
+			return err
+		}
+
+		for i := range bookingItems {
+			bookingItems[i].BookingID = booking.ID
+		}
+
+		if err := s.bookingRepo.CreateBookingItems(tx, bookingItems); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	booking.Items = bookingItems
+	return booking, nil
 }
