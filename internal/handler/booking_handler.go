@@ -291,6 +291,6 @@ func (h *BookingHandler) CreateOfflineBooking(c echo.Context) error {
 	return c.JSON(http.StatusCreated, StandardResponse{
 		Status:  "success",
 		Message: "Offline booking created successfully",
-		Data:    booking,
+		Data:    map[string]string{"booking_no": booking.BookingNo},
 	})
 }
