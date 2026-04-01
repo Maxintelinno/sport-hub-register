@@ -32,7 +32,7 @@ type Booking struct {
 	Note          string        `json:"note" gorm:"type:text"`
 	CustomerName  string        `json:"customer_name" gorm:"size:150"`
 	CustomerPhone string        `json:"customer_phone" gorm:"size:20"`
-	PaymentSource string        `json:"payment_source" gorm:"size:50"`
+	PaymentSource string        `json:"customer_paid_source" gorm:"size:50"`
 	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
 	Items         []BookingItem `json:"items" gorm:"foreignKey:BookingID"`
