@@ -30,9 +30,9 @@ type Booking struct {
 	PaymentStatus string        `json:"payment_status" gorm:"size:20;not null;default:'unpaid'"` // unpaid, paid, refunded
 	Source        string        `json:"booking_source" gorm:"column:booking_source;size:20;not null;default:'online'"` // online, offline
 	Note          string        `json:"note" gorm:"type:text"`
-	CustomerName  string        `json:"customer_name" gorm:"size:150"`
-	CustomerPhone string        `json:"customer_phone" gorm:"size:20"`
-	PaymentSource string        `json:"customer_paid_source" gorm:"size:50"`
+	CustomerName  string        `json:"customer_name" gorm:"column:customer_name;size:150"`
+	CustomerPhone string        `json:"customer_phone" gorm:"column:customer_phone;size:20"`
+	PaymentSource string        `json:"customer_paid_source" gorm:"column:customer_paid_source;size:50"`
 	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
 	Items         []BookingItem `json:"items" gorm:"foreignKey:BookingID"`
