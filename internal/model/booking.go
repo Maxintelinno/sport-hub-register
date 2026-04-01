@@ -151,6 +151,5 @@ type OwnerBookingResponse struct {
 	FieldID   uuid.UUID                    `json:"field_id"`
 	Date      string                       `json:"date"`
 	OpenTime  string                       `json:"open_time"`
-	CloseTime string                       `json:"close_time"`
-	Courts    []OwnerCourtTimelineResponse `json:"courts"`
+	CloseTime string                       `json:"close_time"` 
 }
