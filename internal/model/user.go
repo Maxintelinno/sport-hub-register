@@ -34,6 +34,7 @@ type RegisterRequest struct {
 type RegisterStaffRequest struct {
 	Phone    string `json:"phone" validate:"required"`
 	Username string `json:"username" validate:"required"`
+	Fullname string `json:"fullname" validate:"required"`
 	Role     string `json:"role" validate:"required"`
 }
 

@@ -179,7 +179,7 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 		"phone":    req.Phone,
 		"username": req.Username,
 		"password": "0000000000",
-		"fullname": req.Username, // Default to username as it's required in User model
+		"fullname": req.Fullname,
 		"role":     req.Role,
 	}
 
