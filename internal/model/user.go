@@ -31,6 +31,12 @@ type RegisterRequest struct {
 	Role     string `json:"role" validate:"required"`
 }
 
+type RegisterStaffRequest struct {
+	Phone    string `json:"phone" validate:"required"`
+	Username string `json:"username" validate:"required"`
+	Role     string `json:"role" validate:"required"`
+}
+
 type UserSubscriptionResponse struct {
 	PlanName     string `json:"plan_name"`
 	BillingCycle string `json:"billing_cycle"`

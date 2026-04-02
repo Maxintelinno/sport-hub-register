@@ -36,6 +36,7 @@ func main() {
 		&model.RegistrationToken{},
 		&model.Plan{},
 		&model.Subscription{},
+		&model.OwnerStaff{},
 	)
 
 	// Initialize Echo
@@ -108,6 +109,7 @@ func main() {
 	apiV1.GET("/fields/:id", fieldHandler.GetFieldByID)
 	apiV1.GET("/owner/fields", fieldHandler.GetOwnerFields)
 	apiV1.PATCH("/owner/fields/status", fieldHandler.UpdateFieldStatus)
+	apiV1.POST("/owner/staffs", userHandler.RegisterStaff)
 
 	// Booking Routes
 	apiV1.POST("/courts", bookingHandler.CreateCourt)

@@ -51,3 +51,7 @@ func (r *UserRepository) FindByUsername(tx *gorm.DB, username string) (*model.Us
 	}
 	return &user, nil
 }
+
+func (r *UserRepository) CreateOwnerStaff(tx *gorm.DB, staff *model.OwnerStaff) error {
+	return r.GetDB(tx).Create(staff).Error
+}
