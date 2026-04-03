@@ -13,9 +13,11 @@ type User struct {
 	Fullname     string    `json:"fullname" gorm:"column:fullname;unique;not null"`
 	PasswordHash string    `json:"-" gorm:"column:password_hash;not null"`
 	Role         string    `json:"role" gorm:"column:role;not null;default:'user'"`
-	Province     string    `json:"province" gorm:"column:province;not null"`
-	District     string    `json:"district" gorm:"column:district;not null"`
-	Status       string    `json:"status" gorm:"column:status;type:varchar(20);default:'active';not null"`
+	Province           string    `json:"province" gorm:"column:province;not null"`
+	District           string    `json:"district" gorm:"column:district;not null"`
+	PinHash            string    `json:"-" gorm:"column:pin_hash"`
+	MustChangePassword bool      `json:"must_change_password" gorm:"column:must_change_password;default:false"`
+	Status             string    `json:"status" gorm:"column:status;type:varchar(20);default:'active';not null"`
 	CreatedAt    time.Time `json:"created_at" gorm:"column:created_at;default:now()"`
 	UpdatedAt    time.Time `json:"updated_at" gorm:"column:updated_at;default:now()"`
 }
