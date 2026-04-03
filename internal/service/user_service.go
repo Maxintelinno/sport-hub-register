@@ -203,15 +203,15 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 		// 4. Create User record (bypass Registration Token)
 		now := time.Now()
 		user = &model.User{
-			Phone:        req.Phone,
-			Username:     req.Username,
+			Phone:              req.Phone,
+			Username:           req.Username,
 			Fullname:           req.Fullname,
 			PasswordHash:       string(hashedPassword),
 			Province:           province,                                  // Automatically set from owner's field location
 			District:           district,                                  // Automatically set from owner's field location
 			Role:               req.Role + "_" + req.Username + "_direct", // Use "direct" instead of tokenHash as it's registered by owner
 			Status:             "active",
-			MustChangePassword: true,
+			MustChangePassword: false,
 			CreatedAt:          now,
 			UpdatedAt:          now,
 		}
