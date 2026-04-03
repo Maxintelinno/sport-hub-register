@@ -57,8 +57,9 @@ func main() {
 	planRepo := repository.NewPlanRepository(db)
 	subRepo := repository.NewSubscriptionRepository(db)
 
+	fieldRepo := repository.NewFieldRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	userSvc := service.NewUserService(db, userRepo, tokenRepo, planRepo, subRepo)
+	userSvc := service.NewUserService(db, userRepo, tokenRepo, planRepo, subRepo, fieldRepo)
 	userHandler := handler.NewUserHandler(userSvc)
 
 	otpRepo := repository.NewOTPRepository(db)
@@ -67,8 +68,6 @@ func main() {
 
 	storageSvc := service.NewStorageService()
 	uploadHandler := handler.NewUploadHandler(storageSvc)
-
-	fieldRepo := repository.NewFieldRepository(db)
 	fieldSvc := service.NewFieldService(db, fieldRepo, userRepo, storageSvc)
 	fieldHandler := handler.NewFieldHandler(fieldSvc)
 

@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
 	"strings"
@@ -18,15 +19,17 @@ type UserService struct {
 	tokenRepo *repository.TokenRepository
 	planRepo  *repository.PlanRepository
 	subRepo   *repository.SubscriptionRepository
+	fieldRepo *repository.FieldRepository
 }
 
-func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *repository.TokenRepository, planRepo *repository.PlanRepository, subRepo *repository.SubscriptionRepository) *UserService {
+func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *repository.TokenRepository, planRepo *repository.PlanRepository, subRepo *repository.SubscriptionRepository, fieldRepo *repository.FieldRepository) *UserService {
 	return &UserService{
 		db:        db,
 		repo:      repo,
 		tokenRepo: tokenRepo,
 		planRepo:  planRepo,
 		subRepo:   subRepo,
+		fieldRepo: fieldRepo,
 	}
 }
 
@@ -176,21 +179,36 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 		return nil, errors.New("username already taken")
 	}
 
+	// 2. Fetch owner's field information for Province and District
+	fields, err := s.fieldRepo.FindFieldsByOwnerID(nil, ownerID.String())
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch owner fields: %v", err)
+	}
+	if len(fields) == 0 {
+		return nil, errors.New("owner must have at least one field registered before adding staff")
+	}
+
+	// For simplicity, take the location from the first field
+	province := fields[0].Province
+	district := fields[0].District
+
 	var user *model.User
-	err := s.db.Transaction(func(tx *gorm.DB) error {
-		// 2. Hash Password
+	err = s.db.Transaction(func(tx *gorm.DB) error {
+		// 3. Hash Password
 		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("0000000000"), bcrypt.DefaultCost)
 		if err != nil {
 			return err
 		}
 
-		// 3. Create User record (bypass Registration Token)
+		// 4. Create User record (bypass Registration Token)
 		now := time.Now()
 		user = &model.User{
 			Phone:        req.Phone,
 			Username:     req.Username,
 			Fullname:     req.Fullname,
 			PasswordHash: string(hashedPassword),
+			Province:     province, // Automatically set from owner's field location
+			District:     district, // Automatically set from owner's field location
 			Role:         req.Role + "_" + req.Username + "_direct", // Use "direct" instead of tokenHash as it's registered by owner
 			CreatedAt:    now,
 			UpdatedAt:    now,
@@ -200,7 +218,7 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 			return err
 		}
 
-		// 4. Save to owner_staffs table
+		// 5. Save to owner_staffs table
 		staff := &model.OwnerStaff{
 			OwnerUserID: ownerID,
 			StaffUserID: user.ID,
