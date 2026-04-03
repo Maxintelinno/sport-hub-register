@@ -15,6 +15,7 @@ type User struct {
 	Role         string    `json:"role" gorm:"column:role;not null;default:'user'"`
 	Province     string    `json:"province" gorm:"column:province;not null"`
 	District     string    `json:"district" gorm:"column:district;not null"`
+	Status       string    `json:"status" gorm:"column:status;type:varchar(20);default:'active';not null"`
 	CreatedAt    time.Time `json:"created_at" gorm:"column:created_at;default:now()"`
 	UpdatedAt    time.Time `json:"updated_at" gorm:"column:updated_at;default:now()"`
 }

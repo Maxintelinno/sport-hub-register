@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
 	"github.com/google/uuid"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
 )
 
@@ -207,9 +207,10 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 			Username:     req.Username,
 			Fullname:     req.Fullname,
 			PasswordHash: string(hashedPassword),
-			Province:     province, // Automatically set from owner's field location
-			District:     district, // Automatically set from owner's field location
+			Province:     province,                                  // Automatically set from owner's field location
+			District:     district,                                  // Automatically set from owner's field location
 			Role:         req.Role + "_" + req.Username + "_direct", // Use "direct" instead of tokenHash as it's registered by owner
+			Status:       "active",
 			CreatedAt:    now,
 			UpdatedAt:    now,
 		}
