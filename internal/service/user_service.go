@@ -2,10 +2,6 @@ package service
 
 import (
 	"errors"
-	"encoding/json"
-	"bytes"
-	"fmt"
-	"net/http"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
 	"strings"
@@ -172,61 +168,42 @@ func (s *UserService) Login(req *model.LoginRequest) (*model.UserResponse, error
 }
 
 func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffRequest) (*model.UserResponse, error) {
-	// 1. Prepare external registration request
-	registerURL := "https://sport-hub-register-staging.up.railway.app/register"
-
-	regPayload := map[string]string{
-		"phone":    req.Phone,
-		"username": req.Username,
-		"password": "0000000000",
-		"fullname": req.Fullname,
-		"role":     req.Role,
+	// 1. Check if user already exists
+	if _, err := s.repo.FindByPhone(nil, req.Phone); err == nil {
+		return nil, errors.New("phone number already registered")
+	}
+	if _, err := s.repo.FindByUsername(nil, req.Username); err == nil {
+		return nil, errors.New("username already taken")
 	}
 
-	payloadBytes, err := json.Marshal(regPayload)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := http.Post(registerURL, "application/json", bytes.NewBuffer(payloadBytes))
-	if err != nil {
-		return nil, fmt.Errorf("failed to call registration API: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated && resp.StatusCode != http.StatusOK {
-		var errResp struct {
-			Message string `json:"message"`
+	var user *model.User
+	err := s.db.Transaction(func(tx *gorm.DB) error {
+		// 2. Hash Password
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("0000000000"), bcrypt.DefaultCost)
+		if err != nil {
+			return err
 		}
-		json.NewDecoder(resp.Body).Decode(&errResp)
-		if errResp.Message != "" {
-			return nil, fmt.Errorf("registration failed: %s", errResp.Message)
+
+		// 3. Create User record (bypass Registration Token)
+		now := time.Now()
+		user = &model.User{
+			Phone:        req.Phone,
+			Username:     req.Username,
+			Fullname:     req.Fullname,
+			PasswordHash: string(hashedPassword),
+			Role:         req.Role + "_" + req.Username + "_direct", // Use "direct" instead of tokenHash as it's registered by owner
+			CreatedAt:    now,
+			UpdatedAt:    now,
 		}
-		return nil, fmt.Errorf("registration failed with status code: %d", resp.StatusCode)
-	}
 
-	// 2. Decode response to get User data
-	var apiResponse struct {
-		Status  string              `json:"status"`
-		Message string              `json:"message"`
-		Data    *model.UserResponse `json:"data"`
-	}
+		if err := s.repo.CreateUser(tx, user); err != nil {
+			return err
+		}
 
-	if err := json.NewDecoder(resp.Body).Decode(&apiResponse); err != nil {
-		return nil, fmt.Errorf("failed to decode registration response: %v", err)
-	}
-
-	if apiResponse.Data == nil || apiResponse.Data.User == nil {
-		return nil, errors.New("registration response missing user data")
-	}
-
-	staffUserID := apiResponse.Data.User.ID
-
-	// 3. Save to owner_staffs table
-	err = s.db.Transaction(func(tx *gorm.DB) error {
+		// 4. Save to owner_staffs table
 		staff := &model.OwnerStaff{
 			OwnerUserID: ownerID,
-			StaffUserID: staffUserID,
+			StaffUserID: user.ID,
 			RoleCode:    req.Role,
 			Status:      "active",
 		}
@@ -234,6 +211,7 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 		if err := s.repo.CreateOwnerStaff(tx, staff); err != nil {
 			return err
 		}
+
 		return nil
 	})
 
@@ -241,5 +219,5 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 		return nil, err
 	}
 
-	return apiResponse.Data, nil
+	return &model.UserResponse{User: user}, nil
 }
