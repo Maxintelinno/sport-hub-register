@@ -55,3 +55,12 @@ func (r *UserRepository) FindByUsername(tx *gorm.DB, username string) (*model.Us
 func (r *UserRepository) CreateOwnerStaff(tx *gorm.DB, staff *model.OwnerStaff) error {
 	return r.GetDB(tx).Create(staff).Error
 }
+
+func (r *UserRepository) FindMappingByStaffID(tx *gorm.DB, staffID string) (*model.OwnerStaff, error) {
+	var mapping model.OwnerStaff
+	err := r.GetDB(tx).Where("staff_user_id = ?", staffID).First(&mapping).Error
+	if err != nil {
+		return nil, err
+	}
+	return &mapping, nil
+}

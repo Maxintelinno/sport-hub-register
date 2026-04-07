@@ -73,7 +73,7 @@ func main() {
 
 	bookingRepo := repository.NewBookingRepository(db)
 	courtRepo := repository.NewCourtRepository(db)
-	bookingSvc := service.NewBookingService(db, bookingRepo, courtRepo, fieldRepo)
+	bookingSvc := service.NewBookingService(db, bookingRepo, courtRepo, fieldRepo, userRepo)
 	bookingHandler := handler.NewBookingHandler(bookingSvc)
 
 	// Routes

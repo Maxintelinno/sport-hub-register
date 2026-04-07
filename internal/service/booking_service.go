@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,14 +17,16 @@ type BookingService struct {
 	bookingRepo *repository.BookingRepository
 	courtRepo   *repository.CourtRepository
 	fieldRepo   *repository.FieldRepository
+	userRepo    *repository.UserRepository
 }
 
-func NewBookingService(db *gorm.DB, bookingRepo *repository.BookingRepository, courtRepo *repository.CourtRepository, fieldRepo *repository.FieldRepository) *BookingService {
+func NewBookingService(db *gorm.DB, bookingRepo *repository.BookingRepository, courtRepo *repository.CourtRepository, fieldRepo *repository.FieldRepository, userRepo *repository.UserRepository) *BookingService {
 	return &BookingService{
 		db:          db,
 		bookingRepo: bookingRepo,
 		courtRepo:   courtRepo,
 		fieldRepo:   fieldRepo,
+		userRepo:    userRepo,
 	}
 }
 
@@ -314,6 +317,19 @@ func (s *BookingService) GetFieldAvailability(fieldID string, date string) (*mod
 }
 
 func (s *BookingService) GetOwnerBookings(ownerID string, fieldID string, date string) (*model.OwnerBookingResponse, error) {
+	// 0. Resolve true ownerID if caller is staff/manager/accountant
+	user, err := s.userRepo.FindByID(nil, ownerID)
+	if err == nil {
+		parts := strings.Split(user.Role, "_")
+		role := parts[0]
+		if role == "staff" || role == "manager" || role == "accountant" {
+			mapping, err := s.userRepo.FindMappingByStaffID(nil, ownerID)
+			if err == nil {
+				ownerID = mapping.OwnerUserID.String()
+			}
+		}
+	}
+
 	// 1. Verify owner owns the field
 	field, err := s.fieldRepo.FindFieldByID(nil, fieldID)
 	if err != nil {
