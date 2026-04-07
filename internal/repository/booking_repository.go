@@ -80,3 +80,13 @@ func (r *BookingRepository) FindOwnerBookings(tx *gorm.DB, fieldID string, date 
 		Find(&items).Error
 	return items, err
 }
+
+func (r *BookingRepository) UpdateBookingStatus(tx *gorm.DB, bookingID string, status string, paymentStatus string) error {
+	updates := map[string]interface{}{
+		"status": status,
+	}
+	if paymentStatus != "" {
+		updates["payment_status"] = paymentStatus
+	}
+	return r.getDB(tx).Model(&model.Booking{}).Where("id = ?", bookingID).Updates(updates).Error
+}

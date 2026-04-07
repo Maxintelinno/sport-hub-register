@@ -294,3 +294,85 @@ func (h *BookingHandler) CreateOfflineBooking(c echo.Context) error {
 		Data:    map[string]string{"booking_no": booking.BookingNo},
 	})
 }
+
+func (h *BookingHandler) CancelBooking(c echo.Context) error {
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "unauthorized",
+		})
+	}
+
+	bookingID := c.Param("id")
+	if bookingID == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "booking id is required",
+		})
+	}
+
+	result, err := h.service.CancelBooking(userID, bookingID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		switch err.Error() {
+		case "booking not found":
+			status = http.StatusNotFound
+		case "unauthorized: this booking does not belong to you":
+			status = http.StatusForbidden
+		case "booking is already cancelled", "completed bookings cannot be cancelled":
+			status = http.StatusBadRequest
+		}
+		return c.JSON(status, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Booking cancelled successfully",
+		Data:    result,
+	})
+}
+
+func (h *BookingHandler) GetCancelDetail(c echo.Context) error {
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "unauthorized",
+		})
+	}
+
+	bookingID := c.Param("id")
+	if bookingID == "" {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "booking id is required",
+		})
+	}
+
+	result, err := h.service.GetCancelDetail(userID, bookingID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		switch err.Error() {
+		case "booking not found":
+			status = http.StatusNotFound
+		case "unauthorized: this booking does not belong to you":
+			status = http.StatusForbidden
+		case "booking is already cancelled", "completed bookings cannot be cancelled":
+			status = http.StatusBadRequest
+		}
+		return c.JSON(status, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Cancel booking detail retrieved",
+		Data:    result,
+	})
+}

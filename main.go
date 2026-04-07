@@ -115,6 +115,8 @@ func main() {
 	apiV1.PUT("/courts/:id", bookingHandler.UpdateCourt)
 	apiV1.POST("/bookings", bookingHandler.CreateBooking)
 	apiV1.GET("/bookings/my", bookingHandler.GetMyBookings)
+	apiV1.GET("/bookings/:id/detail/cancel", bookingHandler.GetCancelDetail)
+	apiV1.POST("/bookings/:id/cancel", bookingHandler.CancelBooking)
 	apiV1.GET("/owner/bookings", bookingHandler.GetOwnerBookings)
 	apiV1.GET("/availability", bookingHandler.GetAvailability)
 	apiV1.POST("/owner/bookings/offline", bookingHandler.CreateOfflineBooking)

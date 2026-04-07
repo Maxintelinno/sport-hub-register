@@ -154,3 +154,24 @@ type OwnerBookingResponse struct {
 	CloseTime string                       `json:"close_time"`
 	Courts    []OwnerCourtTimelineResponse `json:"courts"`
 }
+
+// Cancel Booking
+type CancelBookingCourt struct {
+	CourtName string `json:"court_name"`
+	StartTime string `json:"start_time"`
+	EndTime   string `json:"end_time"`
+}
+
+type CancelBookingResponse struct {
+	BookingNo      string               `json:"booking_no"`
+	BookingDate    string               `json:"booking_date"`
+	CreatedAt      time.Time            `json:"created_at"`
+	TotalAmount    float64              `json:"total_amount"`
+	RefundPolicy   string               `json:"refund_policy"`   // "full", "partial", "none"
+	RefundPercent  int                  `json:"refund_percent"`  // 100, 70, 0
+	RefundAmount   float64              `json:"refund_amount"`
+	HoursUntilPlay float64              `json:"hours_until_play"`
+	Status         string               `json:"status"`
+	PaymentStatus  string               `json:"payment_status"`
+	Courts         []CancelBookingCourt `json:"courts"`
+}

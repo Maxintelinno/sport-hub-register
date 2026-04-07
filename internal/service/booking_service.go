@@ -530,3 +530,176 @@ func (s *BookingService) CreateOfflineBooking(ownerID uuid.UUID, req *model.Crea
 	booking.Items = bookingItems
 	return booking, nil
 }
+
+func (s *BookingService) CancelBooking(userID string, bookingID string) (*model.CancelBookingResponse, error) {
+	// 1. Fetch booking
+	booking, err := s.bookingRepo.GetBookingByID(nil, bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// 2. Validate ownership
+	if booking.UserID.String() != userID {
+		return nil, errors.New("unauthorized: this booking does not belong to you")
+	}
+
+	// 3. Check booking is still cancellable
+	if booking.Status == "cancelled" {
+		return nil, errors.New("booking is already cancelled")
+	}
+	if booking.Status == "completed" {
+		return nil, errors.New("completed bookings cannot be cancelled")
+	}
+
+	// 4. Find earliest start_at across all items
+	location := time.FixedZone("ICT", 7*3600)
+	now := time.Now().In(location)
+
+	var earliestStartAt time.Time
+	for i, item := range booking.Items {
+		if i == 0 || item.StartAt.Before(earliestStartAt) {
+			earliestStartAt = item.StartAt
+		}
+	}
+
+	// 5. Calculate hours until play
+	hoursUntilPlay := earliestStartAt.Sub(now).Hours()
+
+	// 6. Apply refund policy
+	var refundPolicy string
+	var refundPercent int
+	if hoursUntilPlay > 48 {
+		refundPolicy = "full"
+		refundPercent = 100
+	} else if hoursUntilPlay >= 24 {
+		refundPolicy = "partial"
+		refundPercent = 70
+	} else {
+		refundPolicy = "none"
+		refundPercent = 0
+	}
+	refundAmount := booking.TotalAmount * float64(refundPercent) / 100
+
+	// 7. Determine new payment_status
+	newPaymentStatus := booking.PaymentStatus
+	if booking.PaymentStatus == "paid" && refundPercent > 0 {
+		newPaymentStatus = "refunded"
+	}
+
+	// 8. Update booking status in DB
+	if err := s.bookingRepo.UpdateBookingStatus(nil, bookingID, "cancelled", newPaymentStatus); err != nil {
+		return nil, fmt.Errorf("failed to cancel booking: %v", err)
+	}
+
+	// 9. Build response
+	courts := make([]model.CancelBookingCourt, 0, len(booking.Items))
+	for _, item := range booking.Items {
+		courts = append(courts, model.CancelBookingCourt{
+			CourtName: item.CourtName,
+			StartTime: item.StartTime,
+			EndTime:   item.EndTime,
+		})
+	}
+
+	if earliestStartAt.IsZero() {
+		hoursUntilPlay = 0
+	}
+
+	return &model.CancelBookingResponse{
+		BookingNo:      booking.BookingNo,
+		BookingDate:    booking.BookingDate.Format("2006-01-02"),
+		CreatedAt:      booking.CreatedAt,
+		TotalAmount:    booking.TotalAmount,
+		RefundPolicy:   refundPolicy,
+		RefundPercent:  refundPercent,
+		RefundAmount:   refundAmount,
+		HoursUntilPlay: hoursUntilPlay,
+		Status:         "cancelled",
+		PaymentStatus:  newPaymentStatus,
+		Courts:         courts,
+	}, nil
+}
+
+// GetCancelDetail returns refund policy details without actually cancelling the booking
+func (s *BookingService) GetCancelDetail(userID string, bookingID string) (*model.CancelBookingResponse, error) {
+	// 1. Fetch booking
+	booking, err := s.bookingRepo.GetBookingByID(nil, bookingID)
+	if err != nil {
+		return nil, errors.New("booking not found")
+	}
+
+	// 2. Validate ownership
+	if booking.UserID.String() != userID {
+		return nil, errors.New("unauthorized: this booking does not belong to you")
+	}
+
+	// 3. Check booking status
+	if booking.Status == "cancelled" {
+		return nil, errors.New("booking is already cancelled")
+	}
+	if booking.Status == "completed" {
+		return nil, errors.New("completed bookings cannot be cancelled")
+	}
+
+	// 4. Find earliest start_at across all items
+	location := time.FixedZone("ICT", 7*3600)
+	now := time.Now().In(location)
+
+	var earliestStartAt time.Time
+	for i, item := range booking.Items {
+		if i == 0 || item.StartAt.Before(earliestStartAt) {
+			earliestStartAt = item.StartAt
+		}
+	}
+
+	// 5. Calculate hours until play
+	hoursUntilPlay := earliestStartAt.Sub(now).Hours()
+	if earliestStartAt.IsZero() {
+		hoursUntilPlay = 0
+	}
+
+	// 6. Apply refund policy
+	var refundPolicy string
+	var refundPercent int
+	if hoursUntilPlay > 48 {
+		refundPolicy = "full"
+		refundPercent = 100
+	} else if hoursUntilPlay >= 24 {
+		refundPolicy = "partial"
+		refundPercent = 70
+	} else {
+		refundPolicy = "none"
+		refundPercent = 0
+	}
+	refundAmount := booking.TotalAmount * float64(refundPercent) / 100
+
+	// 7. Preview payment_status after cancellation (not updated yet)
+	previewPaymentStatus := booking.PaymentStatus
+	if booking.PaymentStatus == "paid" && refundPercent > 0 {
+		previewPaymentStatus = "refunded"
+	}
+
+	// 8. Build courts info
+	courts := make([]model.CancelBookingCourt, 0, len(booking.Items))
+	for _, item := range booking.Items {
+		courts = append(courts, model.CancelBookingCourt{
+			CourtName: item.CourtName,
+			StartTime: item.StartTime,
+			EndTime:   item.EndTime,
+		})
+	}
+
+	return &model.CancelBookingResponse{
+		BookingNo:      booking.BookingNo,
+		BookingDate:    booking.BookingDate.Format("2006-01-02"),
+		CreatedAt:      booking.CreatedAt,
+		TotalAmount:    booking.TotalAmount,
+		RefundPolicy:   refundPolicy,
+		RefundPercent:  refundPercent,
+		RefundAmount:   refundAmount,
+		HoursUntilPlay: hoursUntilPlay,
+		Status:         booking.Status, // current status (not mutated)
+		PaymentStatus:  previewPaymentStatus,
+		Courts:         courts,
+	}, nil
+}
