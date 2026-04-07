@@ -5,6 +5,7 @@ import (
 	"sort"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
+	"strings"
 
 	"gorm.io/gorm"
 )
@@ -157,8 +158,26 @@ func (s *FieldService) UpdateField(id string, req *model.UpdateFieldRequest) (*m
 }
 
 func (s *FieldService) GetFieldsByOwnerID(ownerID string) ([]model.Field, error) {
-	// 1. Fetch fields
-	fields, err := s.repo.FindFieldsByOwnerID(nil, ownerID)
+	// 1. Fetch user to check role
+	user, err := s.userRepo.FindByID(nil, ownerID)
+	if err != nil {
+		return nil, err
+	}
+
+	parts := strings.Split(user.Role, "_")
+	baseRole := parts[0]
+
+	actualOwnerID := ownerID
+	// If role is staff, manager, or accountant, find the real owner
+	if baseRole == "staff" || baseRole == "manager" || baseRole == "accountant" {
+		staffOwner, err := s.userRepo.FindOwnerStaffByStaffUserID(nil, ownerID)
+		if err == nil {
+			actualOwnerID = staffOwner.OwnerUserID.String()
+		}
+	}
+
+	// 2. Fetch fields
+	fields, err := s.repo.FindFieldsByOwnerID(nil, actualOwnerID)
 	if err != nil {
 		return nil, err
 	}
