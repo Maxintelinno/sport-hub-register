@@ -55,12 +55,3 @@ func (r *UserRepository) FindByUsername(tx *gorm.DB, username string) (*model.Us
 func (r *UserRepository) CreateOwnerStaff(tx *gorm.DB, staff *model.OwnerStaff) error {
 	return r.GetDB(tx).Create(staff).Error
 }
-
-func (r *UserRepository) FindOwnerStaffByStaffUserID(tx *gorm.DB, staffUserID string) (*model.OwnerStaff, error) {
-	var staff model.OwnerStaff
-	err := r.GetDB(tx).Where("staff_user_id = ?", staffUserID).First(&staff).Error
-	if err != nil {
-		return nil, err
-	}
-	return &staff, nil
-}
