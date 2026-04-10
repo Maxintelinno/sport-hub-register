@@ -531,7 +531,7 @@ func (s *BookingService) CreateOfflineBooking(ownerID uuid.UUID, req *model.Crea
 	return booking, nil
 }
 
-func (s *BookingService) CancelBooking(userID string, bookingID string) (*model.CancelBookingResponse, error) {
+func (s *BookingService) CancelBooking(userID string, bookingID string, cancelReason string) (*model.CancelBookingResponse, error) {
 	// 1. Fetch booking
 	booking, err := s.bookingRepo.GetBookingByID(nil, bookingID)
 	if err != nil {
@@ -586,8 +586,11 @@ func (s *BookingService) CancelBooking(userID string, bookingID string) (*model.
 		newPaymentStatus = "refunded"
 	}
 
-	// 8. Update booking status in DB
-	if err := s.bookingRepo.UpdateBookingStatus(nil, bookingID, "cancelled", newPaymentStatus); err != nil {
+	// 8. Update booking status in DB with refund details
+	if cancelReason == "" {
+		cancelReason = "User cancelled"
+	}
+	if err := s.bookingRepo.CancelBookingWithRefund(nil, bookingID, cancelReason, refundAmount, newPaymentStatus, refundPolicy); err != nil {
 		return nil, fmt.Errorf("failed to cancel booking: %v", err)
 	}
 

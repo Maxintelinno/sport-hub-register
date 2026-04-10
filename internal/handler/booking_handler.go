@@ -312,7 +312,14 @@ func (h *BookingHandler) CancelBooking(c echo.Context) error {
 		})
 	}
 
-	result, err := h.service.CancelBooking(userID, bookingID)
+	var req struct {
+		CancelReason string `json:"cancel_reason"`
+	}
+	if err := c.Bind(&req); err != nil {
+		// Ignore bind error for optional reason
+	}
+
+	result, err := h.service.CancelBooking(userID, bookingID, req.CancelReason)
 	if err != nil {
 		status := http.StatusInternalServerError
 		switch err.Error() {
