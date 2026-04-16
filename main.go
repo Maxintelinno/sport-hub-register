@@ -60,7 +60,8 @@ func main() {
 
 	fieldRepo := repository.NewFieldRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	userSvc := service.NewUserService(db, userRepo, tokenRepo, planRepo, subRepo, fieldRepo)
+	creditRepo := repository.NewCreditRepository(db)
+	userSvc := service.NewUserService(db, userRepo, tokenRepo, planRepo, subRepo, fieldRepo, creditRepo)
 	userHandler := handler.NewUserHandler(userSvc)
 
 	otpRepo := repository.NewOTPRepository(db)
@@ -74,7 +75,6 @@ func main() {
 
 	bookingRepo := repository.NewBookingRepository(db)
 	courtRepo := repository.NewCourtRepository(db)
-	creditRepo := repository.NewCreditRepository(db)
 	bookingSvc := service.NewBookingService(db, bookingRepo, courtRepo, fieldRepo, userRepo, creditRepo)
 	bookingHandler := handler.NewBookingHandler(bookingSvc)
 

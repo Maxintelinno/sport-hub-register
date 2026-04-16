@@ -48,8 +48,9 @@ type UserSubscriptionResponse struct {
 }
 
 type UserResponse struct {
-	User         *User                     `json:"user"`
-	Subscription *UserSubscriptionResponse `json:"subscription,omitempty"`
+	User          *User                     `json:"user"`
+	Subscription  *UserSubscriptionResponse `json:"subscription,omitempty"`
+	CreditBalance float64                   `json:"credit_balance"`
 }
 
 type LoginRequest struct {

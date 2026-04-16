@@ -20,9 +20,10 @@ type UserService struct {
 	planRepo  *repository.PlanRepository
 	subRepo   *repository.SubscriptionRepository
 	fieldRepo *repository.FieldRepository
+	creditRepo *repository.CreditRepository
 }
 
-func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *repository.TokenRepository, planRepo *repository.PlanRepository, subRepo *repository.SubscriptionRepository, fieldRepo *repository.FieldRepository) *UserService {
+func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *repository.TokenRepository, planRepo *repository.PlanRepository, subRepo *repository.SubscriptionRepository, fieldRepo *repository.FieldRepository, creditRepo *repository.CreditRepository) *UserService {
 	return &UserService{
 		db:        db,
 		repo:      repo,
@@ -30,6 +31,7 @@ func NewUserService(db *gorm.DB, repo *repository.UserRepository, tokenRepo *rep
 		planRepo:  planRepo,
 		subRepo:   subRepo,
 		fieldRepo: fieldRepo,
+		creditRepo: creditRepo,
 	}
 }
 
@@ -165,6 +167,12 @@ func (s *UserService) Login(req *model.LoginRequest) (*model.UserResponse, error
 				Status:       sub.Status,
 			}
 		}
+	}
+
+	// 4. Fetch Credit Balance
+	credit, _ := s.creditRepo.GetByUserID(nil, user.ID.String())
+	if credit != nil {
+		res.CreditBalance = credit.Balance
 	}
 
 	return res, nil
