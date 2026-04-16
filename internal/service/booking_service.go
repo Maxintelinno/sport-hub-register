@@ -175,18 +175,37 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 		})
 	}
 
-	// 2. Create Booking in Transaction
+	// 2. Validate Credit and Calculate Final Amount
+	actualCredit, err := s.creditRepo.GetByUserID(nil, userID.String())
+	creditBalance := 0.0
+	if err == nil && actualCredit != nil {
+		creditBalance = actualCredit.Balance
+	}
+
+	expectedCreditUsed := totalAmount
+	if creditBalance < totalAmount {
+		expectedCreditUsed = creditBalance
+	}
+	expectedRemainingToPay := totalAmount - expectedCreditUsed
+
+	if req.FinalPayableAmount != expectedRemainingToPay {
+		return nil, fmt.Errorf("payment mismatch: calculated remaining %0.2f does not match requested %0.2f (credit balance: %0.2f)", expectedRemainingToPay, req.FinalPayableAmount, creditBalance)
+	}
+
+	// 3. Create Booking in Transaction
 	booking := &model.Booking{
-		ID:            uuid.New(),
-		BookingNo:     s.generateBookingNo(),
-		UserID:        userID,
-		FieldID:       req.FieldID,
-		BookingDate:   bookingDate,
-		TotalAmount:   totalAmount,
-		Status:        "pending",
-		PaymentStatus: "unpaid",
-		Note:          req.Note,
-		Source:        req.Source,
+		ID:                 uuid.New(),
+		BookingNo:          s.generateBookingNo(),
+		UserID:             userID,
+		FieldID:            req.FieldID,
+		BookingDate:        bookingDate,
+		TotalAmount:        totalAmount,
+		CreditUsedAmount:   expectedCreditUsed,
+		FinalPayableAmount: expectedRemainingToPay,
+		Status:             "pending",
+		PaymentStatus:      "unpaid",
+		Note:               req.Note,
+		Source:             req.Source,
 	}
 
 	if booking.Source == "" {

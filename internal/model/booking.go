@@ -68,8 +68,10 @@ type CreateBookingRequest struct {
 	FieldID     uuid.UUID            `json:"field_id" validate:"required"`
 	BookingDate string               `json:"booking_date" validate:"required"` // YYYY-MM-DD
 	Note        string               `json:"note"`
-	Source      string               `json:"booking_source"` // online, offline
-	Items       []CreateBookingItem  `json:"items" validate:"required,min=1"`
+	Source             string              `json:"booking_source"` // online, offline
+	Items              []CreateBookingItem `json:"items" validate:"required,min=1"`
+	CreditUsedAmount   float64             `json:"credit_used_amount"`
+	FinalPayableAmount float64             `json:"final_payable_amount"`
 }
 
 type CreateOfflineBookingRequest struct {
