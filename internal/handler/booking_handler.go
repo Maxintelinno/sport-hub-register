@@ -383,3 +383,42 @@ func (h *BookingHandler) GetCancelDetail(c echo.Context) error {
 		Data:    result,
 	})
 }
+
+func (h *BookingHandler) GetCheckoutCreditPreview(c echo.Context) error {
+	userID, ok := c.Get("user_id").(string)
+	if !ok || userID == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "unauthorized",
+		})
+	}
+
+	req := new(model.CheckoutCreditPreviewRequest)
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid request format",
+		})
+	}
+
+	if err := c.Validate(req); err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	preview, err := h.service.GetCheckoutCreditPreview(userID, req.TotalAmount)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Checkout credit preview retrieved",
+		Data:    preview,
+	})
+}

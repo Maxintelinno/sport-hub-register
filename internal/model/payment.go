@@ -26,6 +26,7 @@ type Payment struct {
 	FailedAt              *time.Time      `json:"failed_at"`
 	FailureReason         string          `json:"failure_reason" gorm:"type:text"`
 	Metadata              json.RawMessage `json:"metadata" gorm:"type:jsonb"`
+	PaymentType           string          `json:"payment_type" gorm:"column:payment_type;type:varchar(30);not null;default:'gateway'"` // gateway, credit, mixed
 	CreatedAt             time.Time       `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt             time.Time       `json:"updated_at" gorm:"not null;default:now()"`
 	RefundedAmount        float64         `json:"refunded_amount" gorm:"type:numeric(10,2)"`

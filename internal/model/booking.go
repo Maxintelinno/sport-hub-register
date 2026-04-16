@@ -35,8 +35,10 @@ type Booking struct {
 	PaymentSource string        `json:"customer_paid_source" gorm:"column:customer_paid_source;size:50"`
 	CancelledAt   *time.Time    `json:"cancelled_at" gorm:"column:cancelled_at"`
 	CancelReason  string        `json:"cancel_reason" gorm:"column:cancel_reason;type:text"`
-	RefundAmount  float64       `json:"refund_amount" gorm:"column:refund_amount;type:numeric(10,2)"`
-	CreatedAt     time.Time     `json:"created_at" gorm:"not null;default:now()"`
+	RefundAmount        float64       `json:"refund_amount" gorm:"column:refund_amount;type:numeric(10,2)"`
+	CreditUsedAmount    float64       `json:"credit_used_amount" gorm:"column:credit_used_amount;type:numeric(12,2);not null;default:0"`
+	FinalPayableAmount  float64       `json:"final_payable_amount" gorm:"column:final_payable_amount;type:numeric(12,2);not null;default:0"`
+	CreatedAt           time.Time     `json:"created_at" gorm:"not null;default:now()"`
 	UpdatedAt     time.Time     `json:"updated_at" gorm:"not null;default:now()"`
 	Items         []BookingItem `json:"items" gorm:"foreignKey:BookingID"`
 }

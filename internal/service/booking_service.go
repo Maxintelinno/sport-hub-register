@@ -18,15 +18,17 @@ type BookingService struct {
 	courtRepo   *repository.CourtRepository
 	fieldRepo   *repository.FieldRepository
 	userRepo    *repository.UserRepository
+	creditRepo  *repository.CreditRepository
 }
 
-func NewBookingService(db *gorm.DB, bookingRepo *repository.BookingRepository, courtRepo *repository.CourtRepository, fieldRepo *repository.FieldRepository, userRepo *repository.UserRepository) *BookingService {
+func NewBookingService(db *gorm.DB, bookingRepo *repository.BookingRepository, courtRepo *repository.CourtRepository, fieldRepo *repository.FieldRepository, userRepo *repository.UserRepository, creditRepo *repository.CreditRepository) *BookingService {
 	return &BookingService{
 		db:          db,
 		bookingRepo: bookingRepo,
 		courtRepo:   courtRepo,
 		fieldRepo:   fieldRepo,
 		userRepo:    userRepo,
+		creditRepo:  creditRepo,
 	}
 }
 
@@ -704,5 +706,35 @@ func (s *BookingService) GetCancelDetail(userID string, bookingID string) (*mode
 		Status:         booking.Status, // current status (not mutated)
 		PaymentStatus:  previewPaymentStatus,
 		Courts:         courts,
+	}, nil
+}
+
+func (s *BookingService) GetCheckoutCreditPreview(userID string, totalAmount float64) (*model.CheckoutCreditPreviewResponse, error) {
+	credit, err := s.creditRepo.GetByUserID(nil, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// No credit record found for user, assume 0 balance
+			return &model.CheckoutCreditPreviewResponse{
+				TotalAmount:    totalAmount,
+				CreditBalance:  0,
+				CreditToUse:    0,
+				RemainingToPay: totalAmount,
+			}, nil
+		}
+		return nil, fmt.Errorf("failed to get credit balance: %v", err)
+	}
+
+	creditToUse := totalAmount
+	if credit.Balance < totalAmount {
+		creditToUse = credit.Balance
+	}
+
+	remainingToPay := totalAmount - creditToUse
+
+	return &model.CheckoutCreditPreviewResponse{
+		TotalAmount:    totalAmount,
+		CreditBalance:  credit.Balance,
+		CreditToUse:    creditToUse,
+		RemainingToPay: remainingToPay,
 	}, nil
 }

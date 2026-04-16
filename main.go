@@ -37,6 +37,7 @@ func main() {
 		&model.Plan{},
 		&model.Subscription{},
 		&model.OwnerStaff{},
+		&model.BookingCredit{},
 	)
 
 	// Initialize Echo
@@ -73,7 +74,8 @@ func main() {
 
 	bookingRepo := repository.NewBookingRepository(db)
 	courtRepo := repository.NewCourtRepository(db)
-	bookingSvc := service.NewBookingService(db, bookingRepo, courtRepo, fieldRepo, userRepo)
+	creditRepo := repository.NewCreditRepository(db)
+	bookingSvc := service.NewBookingService(db, bookingRepo, courtRepo, fieldRepo, userRepo, creditRepo)
 	bookingHandler := handler.NewBookingHandler(bookingSvc)
 
 	// Routes
@@ -117,6 +119,7 @@ func main() {
 	apiV1.GET("/bookings/my", bookingHandler.GetMyBookings)
 	apiV1.GET("/bookings/:id/detail/cancel", bookingHandler.GetCancelDetail)
 	apiV1.POST("/bookings/:id/cancel", bookingHandler.CancelBooking)
+	apiV1.POST("/bookings/checkout/credit", bookingHandler.GetCheckoutCreditPreview)
 	apiV1.GET("/owner/bookings", bookingHandler.GetOwnerBookings)
 	apiV1.GET("/availability", bookingHandler.GetAvailability)
 	apiV1.POST("/owner/bookings/offline", bookingHandler.CreateOfflineBooking)

@@ -1,0 +1,75 @@
+ควรเพิ่ม field อะไรบ้าง
+1) เพิ่มใน bookings
+
+เพื่อรู้ว่า booking นี้ใช้เครดิตไปเท่าไร
+
+ALTER TABLE public.bookings
+ADD COLUMN credit_used_amount numeric(12,2) NOT NULL DEFAULT 0,
+ADD COLUMN final_payable_amount numeric(12,2) NOT NULL DEFAULT 0;
+ความหมาย
+    - credit_used_amount = ใช้เครดิตไปกี่บาท
+    - final_payable_amount = หลังหักเครดิตแล้วต้องจ่ายจริงอีกกี่บาท
+
+2) เพิ่มใน payments
+
+เพื่อรู้ payment นี้เป็นประเภทไหน
+
+ALTER TABLE public.payments
+ADD COLUMN payment_type varchar(30) NOT NULL DEFAULT 'gateway';
+-- gateway / credit / mixed
+ความหมาย
+    - gateway = จ่ายผ่าน Omise/QR ล้วน
+    - credit = จ่ายด้วยเครดิต 100%
+    - mixed = เครดิต + gateway   
+
+#############################
+#####   UX flow ฝั่งผู้ใช้   #####
+#############################
+
+Step 1: User มาถึงหน้าสรุปการจอง
+
+สมมติ booking ราคา 1,000 บาท
+
+ระบบดึง:
+
+ - เครดิตคงเหลือจาก booking_credits.balance
+
+แล้วโชว์แบบนี้:
+    ####################################
+    ###### ยอดจองทั้งหมด: ฿1,000    ######
+    ###### เครดิตการจองของคุณ: ฿700 ######
+    ######                        ######
+    ###### [✓] ใช้เครดิตการจอง      ######
+    ###### ใช้ครั้งนี้: ฿700           ######
+    ######                        ######
+    ###### ยอดที่ต้องชำระเพิ่ม: ฿300   ######
+    ####################################
+
+Step 2: กดชำระเงิน
+
+จะมี 3 กรณี
+
+กรณี A: เครดิตพอเต็ม
+    - booking = 1,000
+    - credit = 1,000 หรือมากกว่า
+ผล:
+
+    - หักเครดิต 1,000
+    - ไม่ต้องสร้าง QR
+    - booking confirmed ได้เลย
+
+กรณี B: เครดิตพอบางส่วน
+    - booking = 1,000
+    - credit = 700
+ผล:
+    - หักเครดิต 700
+    - สร้าง QR แค่ 300
+    - รอ payment success
+    - ค่อย confirmed 
+
+กรณี C: ไม่มีเครดิต
+    - booking = 1,000
+    - credit = 0
+ผล:
+    - จ่ายผ่าน QR เต็มจำนวน
+
