@@ -188,7 +188,14 @@ func (s *BookingService) CreateBooking(userID uuid.UUID, req *model.CreateBookin
 	}
 	expectedRemainingToPay := totalAmount - expectedCreditUsed
 
-	if req.FinalPayableAmount != expectedRemainingToPay {
+	// Validate that the user isn't trying to use more credit than they have
+	if req.CreditUsedAmount > creditBalance {
+		return nil, fmt.Errorf("insufficient credit balance: available %0.2f, requested %0.2f", creditBalance, req.CreditUsedAmount)
+	}
+
+	// Only validate payable amount mismatch if the user explicitly provided a non-zero value.
+	// If both are 0, we assume the system should use backend-calculated values.
+	if (req.FinalPayableAmount > 0 || req.CreditUsedAmount > 0) && req.FinalPayableAmount != expectedRemainingToPay {
 		return nil, fmt.Errorf("payment mismatch: calculated remaining %0.2f does not match requested %0.2f (credit balance: %0.2f)", expectedRemainingToPay, req.FinalPayableAmount, creditBalance)
 	}
 
