@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"fmt"
 	"sport-hub-register/internal/model"
 	"time"
 
@@ -86,6 +87,12 @@ func (r *BookingRepository) CancelBookingWithRefund(tx *gorm.DB, bookingID strin
 	return r.getDB(tx).Transaction(func(tx *gorm.DB) error {
 		now := time.Now()
 
+		// 0. Get Booking to find UserID and BookingNo
+		var booking model.Booking
+		if err := tx.Select("id, user_id, booking_no").Where("id = ?", bookingID).First(&booking).Error; err != nil {
+			return err
+		}
+
 		// 1. Update Booking
 		bookingUpdates := map[string]interface{}{
 			"status":         "cancelled",
@@ -117,6 +124,41 @@ func (r *BookingRepository) CancelBookingWithRefund(tx *gorm.DB, bookingID strin
 		}
 		if err := tx.Model(&model.Payment{}).Where("booking_id = ?", bookingID).Updates(paymentUpdates).Error; err != nil {
 			return err
+		}
+
+		// 4. Update User Credits if refundAmount > 0
+		if refundAmount > 0 {
+			var credit model.BookingCredit
+			// Use FirstOrCreate to ensure the record exists for the user
+			if err := tx.Where(model.BookingCredit{UserID: booking.UserID}).FirstOrCreate(&credit).Error; err != nil {
+				return err
+			}
+
+			balanceBefore := credit.Balance
+			credit.Balance += refundAmount
+			credit.TotalEarned += refundAmount
+			credit.UpdatedAt = now
+
+			if err := tx.Save(&credit).Error; err != nil {
+				return err
+			}
+
+			// Record transaction
+			transaction := model.BookingCreditTransaction{
+				UserID:          booking.UserID,
+				BookingCreditID: credit.ID,
+				TransactionType: "refund",
+				SourceType:      "booking",
+				ReferenceID:     &booking.ID,
+				Amount:          refundAmount,
+				BalanceBefore:   balanceBefore,
+				BalanceAfter:    credit.Balance,
+				Note:            fmt.Sprintf("Refund from cancelled booking %s", booking.BookingNo),
+				CreatedAt:       now,
+			}
+			if err := tx.Create(&transaction).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
