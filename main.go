@@ -111,6 +111,7 @@ func main() {
 	apiV1.GET("/owner/fields", fieldHandler.GetOwnerFields)
 	apiV1.PATCH("/owner/fields/status", fieldHandler.UpdateFieldStatus)
 	apiV1.POST("/owner/staffs", userHandler.RegisterStaff)
+	apiV1.GET("/user/credit", userHandler.GetCreditBalance)
 
 	// Booking Routes
 	apiV1.POST("/courts", bookingHandler.CreateCourt)

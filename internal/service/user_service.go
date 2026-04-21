@@ -249,3 +249,18 @@ func (s *UserService) RegisterStaff(ownerID uuid.UUID, req *model.RegisterStaffR
 
 	return &model.UserResponse{User: user}, nil
 }
+
+func (s *UserService) GetCreditBalance(userID uuid.UUID) (*model.BookingCredit, error) {
+	credit, err := s.creditRepo.GetByUserID(nil, userID.String())
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			// Return default empty credit if not found
+			return &model.BookingCredit{
+				UserID:  userID,
+				Balance: 0,
+			}, nil
+		}
+		return nil, err
+	}
+	return credit, nil
+}

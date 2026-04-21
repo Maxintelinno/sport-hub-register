@@ -125,3 +125,35 @@ func (h *UserHandler) RegisterStaff(c echo.Context) error {
 		Data:    res,
 	})
 }
+
+func (h *UserHandler) GetCreditBalance(c echo.Context) error {
+	userIDStr, ok := c.Get("user_id").(string)
+	if !ok || userIDStr == "" {
+		return c.JSON(http.StatusUnauthorized, StandardResponse{
+			Status:  "error",
+			Message: "Unauthorized",
+		})
+	}
+
+	userID, err := uuid.Parse(userIDStr)
+	if err != nil {
+		return c.JSON(http.StatusBadRequest, StandardResponse{
+			Status:  "error",
+			Message: "Invalid user ID",
+		})
+	}
+
+	credit, err := h.service.GetCreditBalance(userID)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, StandardResponse{
+			Status:  "error",
+			Message: err.Error(),
+		})
+	}
+
+	return c.JSON(http.StatusOK, StandardResponse{
+		Status:  "success",
+		Message: "Credit balance retrieved successfully",
+		Data:    credit,
+	})
+}
