@@ -97,9 +97,10 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 	log.Printf("[OTPService] Generated new external OTP for %s: refno %s", phone, otpRes.Refno)
 
 	otpRecord := &model.OTPRequestRecord{
-		Phone:     phone,
-		OTPHash:   otpRes.Token, // Store external token here instead of bcrypt hash
-		ExpiresAt: time.Now().Add(5 * time.Minute),
+		Phone:       phone,
+		OTPHash:     otpRes.Token, // Store external token here instead of bcrypt hash
+		ProviderRef: otpRes.Refno,
+		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 
 	err = s.repo.CreateOTP(nil, otpRecord)
@@ -207,6 +208,10 @@ func (s *OTPService) verifyOTPExternal(token, pin string) error {
 	var verifyRes struct {
 		Status  string `json:"status"`
 		Message string `json:"message"`
+		Code    int    `json:"code"`
+		Errors  []struct {
+			Message string `json:"message"`
+		} `json:"errors"`
 	}
 
 	if err := json.Unmarshal(body, &verifyRes); err != nil {
@@ -214,6 +219,12 @@ func (s *OTPService) verifyOTPExternal(token, pin string) error {
 	}
 
 	if verifyRes.Status != "success" {
+		if len(verifyRes.Errors) > 0 {
+			return errors.New(verifyRes.Errors[0].Message)
+		}
+		if verifyRes.Message != "" {
+			return errors.New(verifyRes.Message)
+		}
 		return errors.New("invalid OTP code")
 	}
 
