@@ -22,11 +22,11 @@ func (OTPRequestRecord) TableName() string {
 }
 
 type OTPRequest struct {
-	Phone string `json:"phone" validate:"required,numeric,min=10,max=10"`
+	Phone string `json:"phone" validate:"required,numeric,min=10,max=11"`
 }
 
 type OTPVerifyRequest struct {
-	Phone string `json:"phone" validate:"required,numeric,min=10,max=10"`
+	Phone string `json:"phone" validate:"required,numeric,min=10,max=11"`
 	Otp   string `json:"otp" validate:"required,numeric,len=6"`
 }
 
