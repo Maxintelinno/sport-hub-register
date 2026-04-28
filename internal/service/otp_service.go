@@ -44,12 +44,15 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 
 	key := os.Getenv("OTP_APP_KEY")
 	secret := os.Getenv("OTP_APP_SECRET")
+	apiUrl := os.Getenv("OTP_APP_REQUEST_URL")
+
+	if apiUrl == "" {
+		return "", "", errors.New("OTP api not found")
+	}
 
 	if key == "" || secret == "" {
 		return "", "", errors.New("OTP credentials not configured")
 	}
-
-	apiUrl := "https://otp.thaibulksms.com/v2/otp/request"
 
 	data := url.Values{}
 	data.Set("key", key)
@@ -133,9 +136,9 @@ func (s *OTPService) VerifyOTP(phone, code string) (string, error) {
 		// 3. Match Code with external service
 		err = s.verifyOTPExternal(otp.OTPHash, code)
 		if err != nil {
-			log.Printf("[OTPService] Invalid OTP code for %s (Attempts: %d)", phone, otp.Attempts+1)
+			log.Printf("[OTPService] Invalid OTP code for %s (Attempts: %d): %v", phone, otp.Attempts+1, err)
 			_ = s.repo.IncrementAttempts(tx, otp.ID.String())
-			return errors.New("invalid OTP code")
+			return err
 		}
 
 		log.Printf("[OTPService] OTP verified successfully for %s", phone)
@@ -176,8 +179,11 @@ func (s *OTPService) VerifyOTP(phone, code string) (string, error) {
 func (s *OTPService) verifyOTPExternal(token, pin string) error {
 	key := os.Getenv("OTP_APP_KEY")
 	secret := os.Getenv("OTP_APP_SECRET")
+	apiUrl := os.Getenv("OTP_APP_VERIFY_URL")
 
-	apiUrl := "https://otp.thaibulksms.com/v2/otp/verify"
+	if apiUrl == "" {
+		return errors.New("OTP api not found")
+	}
 
 	data := url.Values{}
 	data.Set("key", key)
