@@ -79,19 +79,13 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 		return "", "", err
 	}
 
-	var otpRes struct {
-		Status string `json:"status"`
-		Token  string `json:"token"`
-		Refno  string `json:"refno"`
-		Error  string `json:"error"`
-	}
-
+	var otpRes model.OtpRes
 	if err := json.Unmarshal(body, &otpRes); err != nil {
 		return "", "", fmt.Errorf("failed to parse OTP response: %v", err)
 	}
 
-	if otpRes.Status != "success" {
-		return "", "", fmt.Errorf("OTP request failed: %s", string(body))
+	if otpRes.Status == "fail" {
+		return "", "", fmt.Errorf("OTP request failed: %s", otpRes.Error)
 	}
 
 	// 2. Clean up old OTPs for this phone
@@ -103,6 +97,7 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 		Phone:       phone,
 		OTPHash:     otpRes.Token, // Store external token here instead of bcrypt hash
 		ProviderRef: otpRes.Refno,
+		Token:       otpRes.Token,
 		ExpiresAt:   time.Now().Add(5 * time.Minute),
 	}
 

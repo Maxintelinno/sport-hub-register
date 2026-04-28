@@ -29,3 +29,10 @@ type OTPVerifyRequest struct {
 	Phone string `json:"phone" validate:"required,numeric,min=10,max=10"`
 	Otp   string `json:"otp" validate:"required,numeric,len=6"`
 }
+
+type OtpRes struct {
+	Status string `json:"status"`
+	Token  string `json:"token"`
+	Refno  string `json:"refno"`
+	Error  string `json:"error"`
+}
