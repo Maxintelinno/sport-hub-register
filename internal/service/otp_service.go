@@ -78,6 +78,8 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+	
+	log.Printf("[OTPProvider Response]: %s", string(body))
 
 	var otpRes model.OtpRes
 	if err := json.Unmarshal(body, &otpRes); err != nil {
