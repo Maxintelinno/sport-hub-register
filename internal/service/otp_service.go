@@ -1,13 +1,17 @@
 package service
 
 import (
-	"crypto/rand"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"log"
+	"net/http"
+	"net/url"
+	"os"
 	"sport-hub-register/internal/model"
 	"sport-hub-register/internal/repository"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -25,49 +29,85 @@ func NewOTPService(db *gorm.DB, repo *repository.OTPRepository, tokenRepo *repos
 	return &OTPService{db: db, repo: repo, tokenRepo: tokenRepo}
 }
 
-func (s *OTPService) RequestOTP(phone string) (string, error) {
+func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 	// 1. Cooldown Check (1 minute) with 5-second grace period for double-clicks
 	lastOTP, err := s.repo.FindLatestByPhone(nil, phone)
 	if err == nil && lastOTP != nil {
 		elapsed := time.Since(lastOTP.CreatedAt)
 		if elapsed < 5*time.Second {
-			log.Printf("[OTPService] Phone %s requested OTP again within grace period (%v). Returning latest code.", phone, elapsed)
-			// In a real scenario, we might want to return the same code if possible,
-			// or just ignore if it's too fast. For now, let's just log it.
-			// But the user error was "requested too frequently", so let's allow very fast retries
-			// to return the SAME session if it's within 5 seconds.
-			// However, RequestOTP generates a NEW one. Let's just allow it for now by not returning error.
+			log.Printf("[OTPService] Phone %s requested OTP again within grace period (%v).", phone, elapsed)
 		} else if elapsed < 1*time.Minute {
 			log.Printf("[OTPService] Phone %s requested OTP too frequently: %v elapsed", phone, elapsed)
-			return "", errors.New("OTP requested too frequently. Please wait 1 minute.")
+			return "", "", errors.New("OTP requested too frequently. Please wait 1 minute.")
 		}
+	}
+
+	key := os.Getenv("OTP_APP_KEY")
+	secret := os.Getenv("OTP_APP_SECRET")
+
+	if key == "" || secret == "" {
+		return "", "", errors.New("OTP credentials not configured")
+	}
+
+	apiUrl := "https://otp.thaibulksms.com/v2/otp/request"
+
+	data := url.Values{}
+	data.Set("key", key)
+	data.Set("secret", secret)
+	data.Set("msisdn", phone)
+
+	req, err := http.NewRequest("POST", apiUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return "", "", err
+	}
+
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return "", "", err
+	}
+
+	var otpRes struct {
+		Status string `json:"status"`
+		Token  string `json:"token"`
+		Refno  string `json:"refno"`
+		Error  string `json:"error"`
+	}
+
+	if err := json.Unmarshal(body, &otpRes); err != nil {
+		return "", "", fmt.Errorf("failed to parse OTP response: %v", err)
+	}
+
+	if otpRes.Status != "success" {
+		return "", "", fmt.Errorf("OTP request failed: %s", string(body))
 	}
 
 	// 2. Clean up old OTPs for this phone
 	_ = s.repo.DeleteByPhone(nil, phone)
 
-	// 3. Generate 6-digit OTP
-	code := s.generateNumericOTP(6)
-	log.Printf("[OTPService] Generated new OTP for %s: %s", phone, code)
-
-	// 4. Hash OTP
-	hashedCode, err := bcrypt.GenerateFromPassword([]byte(code), bcrypt.DefaultCost)
-	if err != nil {
-		return "", err
-	}
+	log.Printf("[OTPService] Generated new external OTP for %s: refno %s", phone, otpRes.Refno)
 
 	otpRecord := &model.OTPRequestRecord{
 		Phone:     phone,
-		OTPHash:   string(hashedCode),
+		OTPHash:   otpRes.Token, // Store external token here instead of bcrypt hash
 		ExpiresAt: time.Now().Add(5 * time.Minute),
 	}
 
 	err = s.repo.CreateOTP(nil, otpRecord)
 	if err != nil {
-		return "", err
+		return "", "", err
 	}
 
-	return code, nil
+	return otpRes.Token, otpRes.Refno, nil
 }
 
 func (s *OTPService) VerifyOTP(phone, code string) (string, error) {
@@ -89,8 +129,8 @@ func (s *OTPService) VerifyOTP(phone, code string) (string, error) {
 			return errors.New("too many failed attempts (limit 5)")
 		}
 
-		// 3. Match Code
-		err = bcrypt.CompareHashAndPassword([]byte(otp.OTPHash), []byte(code))
+		// 3. Match Code with external service
+		err = s.verifyOTPExternal(otp.OTPHash, code)
 		if err != nil {
 			log.Printf("[OTPService] Invalid OTP code for %s (Attempts: %d)", phone, otp.Attempts+1)
 			_ = s.repo.IncrementAttempts(tx, otp.ID.String())
@@ -132,12 +172,50 @@ func (s *OTPService) VerifyOTP(phone, code string) (string, error) {
 	return registrationToken, nil
 }
 
-func (s *OTPService) generateNumericOTP(max int) string {
-	b := make([]byte, max)
-	_, _ = io.ReadFull(rand.Reader, b)
-	var otp string
-	for _, v := range b {
-		otp += fmt.Sprintf("%d", v%10)
+func (s *OTPService) verifyOTPExternal(token, pin string) error {
+	key := os.Getenv("OTP_APP_KEY")
+	secret := os.Getenv("OTP_APP_SECRET")
+
+	apiUrl := "https://otp.thaibulksms.com/v2/otp/verify"
+
+	data := url.Values{}
+	data.Set("key", key)
+	data.Set("secret", secret)
+	data.Set("token", token)
+	data.Set("pin", pin)
+
+	req, err := http.NewRequest("POST", apiUrl, strings.NewReader(data.Encode()))
+	if err != nil {
+		return err
 	}
-	return otp
+
+	req.Header.Add("accept", "application/json")
+	req.Header.Add("content-type", "application/x-www-form-urlencoded")
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	res, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+
+	body, err := io.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	var verifyRes struct {
+		Status  string `json:"status"`
+		Message string `json:"message"`
+	}
+
+	if err := json.Unmarshal(body, &verifyRes); err != nil {
+		return fmt.Errorf("failed to parse verify response: %v", err)
+	}
+
+	if verifyRes.Status != "success" {
+		return errors.New("invalid OTP code")
+	}
+
+	return nil
 }

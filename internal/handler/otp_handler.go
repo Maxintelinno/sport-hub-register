@@ -41,7 +41,7 @@ func (h *OTPHandler) RequestOTP(c echo.Context) error {
 	}
 
 	log.Printf("[OTPHandler] RequestOTP for phone: %s", req.Phone)
-	code, err := h.service.RequestOTP(req.Phone)
+	token, refno, err := h.service.RequestOTP(req.Phone)
 	if err != nil {
 		log.Printf("[OTPHandler] RequestOTP Service Error for %s: %v", req.Phone, err)
 		return c.JSON(http.StatusInternalServerError, StandardResponse{
@@ -53,7 +53,7 @@ func (h *OTPHandler) RequestOTP(c echo.Context) error {
 	return c.JSON(http.StatusOK, StandardResponse{
 		Status:  "success",
 		Message: "OTP sent successfully",
-		Data:    map[string]string{"code": code},
+		Data:    map[string]string{"token": token, "refno": refno},
 	})
 }
 
