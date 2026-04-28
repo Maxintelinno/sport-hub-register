@@ -46,6 +46,10 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 	secret := os.Getenv("OTP_APP_SECRET")
 	apiUrl := os.Getenv("OTP_APP_REQUEST_URL")
 
+	log.Println("KEY:", key)
+	log.Println("SECRET:", secret)
+	log.Println("URL:", apiUrl)
+
 	if apiUrl == "" {
 		return "", "", errors.New("OTP api not found")
 	}
@@ -72,13 +76,19 @@ func (s *OTPService) RequestOTP(phone string) (string, string, error) {
 	if err != nil {
 		return "", "", err
 	}
+
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
 		return "", "", err
 	}
-	
+
+	if res.StatusCode != 200 {
+		log.Printf("[OTP ERROR] Status: %d, Body: %s", res.StatusCode, string(body))
+		return "", "", fmt.Errorf("OTP API failed with status %d", res.StatusCode)
+	}
+
 	log.Printf("[OTPProvider Response]: %s", string(body))
 
 	var otpRes model.OtpRes
